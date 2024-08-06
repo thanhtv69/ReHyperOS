@@ -141,7 +141,7 @@ if __name__ == '__main__':
         if sys.argv[3] == '-i':
             VERBOSE = True
     if (os.path.isdir(sys.argv[1]) or os.path.isfile(sys.argv[2])):
-        print("FSPATCH by [%s]\nLICENES [%s]\nVERSION [%s]" %(AUTHOR, LICENES, VERSION))
+        # print("FSPATCH by [%s]\nLICENES [%s]\nVERSION [%s]" %(AUTHOR, LICENES, VERSION))
         main(sys.argv[1], sys.argv[2])
         print("Done!")
     else:

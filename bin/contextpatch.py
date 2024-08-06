@@ -97,7 +97,7 @@ if __name__ == '__main__':
         if sys.argv[3] == '-i':
             VERBOSE = True
     if (os.path.isdir(sys.argv[1]) or os.path.isfile(sys.argv[2])):
-        print("CONTEXTPATCH by [%s]\n\nVERSION [%s]" %(AUTHOR,VERSION))
+        # print("CONTEXTPATCH by [%s]\n\nVERSION [%s]" %(AUTHOR,VERSION))
         main(sys.argv[1], sys.argv[2])
         print("Done!")
     else:
