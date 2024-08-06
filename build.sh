@@ -28,7 +28,7 @@ build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 download_and_extract(){
     if [ ! -f "$zip_name" ]; then
         echo "Downloading... [$zip_name]"
-        sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$WORK_DIR" "$URL"
+        sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
     fi
 
     echo "Extracting... [payload.bin]"
@@ -42,8 +42,12 @@ download_and_extract(){
     [ "$is_clean" = true ] && rm -rf "$OUT_DIR/payload.bin"
 
     for partition in "${extract_list[@]}"; do
+        if [ ! -f "$OUT_DIR/images/$partition.img" ]; then
+            echo "Not found $partition.img"
+            exit 1
+        fi
         echo "Extracting... [$partition]"
-        extract.erofs -i $OUT_DIR/images/$partition.img -o "$OUT_DIR"
+        extract.erofs -x -i $OUT_DIR/images/$partition.img -o "$OUT_DIR"
         if [ ! -d "$OUT_DIR/$partition" ]; then
             echo "Extract $partition.img failed"
             exit 1
