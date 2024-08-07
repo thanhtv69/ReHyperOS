@@ -16,6 +16,9 @@ FILES_DIR=$PROJECT_DIR/files
 IMAGES_DIR=$OUT_DIR/images
 EXTRACTED_DIR=$OUT_DIR/extracted
 READY_DIR=$OUT_DIR/ready_flash
+APKTOOL_COMMAND="java -jar $BIN_DIR/apktool/apktool.jar"
+BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
+SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
 
 # project_dir=$(pwd)
 # work_dir=${project_dir}/out
@@ -32,11 +35,9 @@ zip_name=$(echo ${URL} | cut -d"/" -f5)
 os_version=$(echo ${URL} | cut -d"/" -f4)
 android_version=$(echo ${URL} | cut -d"_" -f5 | cut -d"." -f1)
 build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
-
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
 download_and_extract() {
-    start_time=$(date +%s)
     if [ ! -f "$zip_name" ]; then
         echo "Đang tải xuống... [$zip_name]"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
@@ -50,16 +51,17 @@ download_and_extract() {
     payload_output=$(payload-dumper-go -l "$OUT_DIR/payload.bin")
     p_payload=($(echo "$payload_output" | grep -oP '\b\w+(?=\s\()'))
 
-    missing_partitions=""
-    for p in "${p_payload[@]}"; do
-        if [ ! -e "$IMAGES_DIR/$p.img" ]; then
-            if [ -z "$missing_partitions" ]; then
-                missing_partitions="$p"
-            else
-                missing_partitions="$missing_partitions,$p"
-            fi
-        fi
-    done
+    # missing_partitions=""
+    # for p in "${p_payload[@]}"; do
+    #     if [ ! -e "$IMAGES_DIR/$p.img" ]; then
+    #         if [ -z "$missing_partitions" ]; then
+    #             missing_partitions="$p"
+    #         else
+    #             missing_partitions="$missing_partitions,$p"
+    #         fi
+    #     fi
+    # done
+    missing_partitions=$(for p in "${p_payload[@]}"; do [ ! -e "$IMAGES_DIR/$p.img" ] && echo -n "${missing_partitions:+$missing_partitions,}$p"; done)
 
     if [ ! -z "$missing_partitions" ]; then
         echo "Đang giải nén các phân vùng thiếu: [$missing_partitions]"
@@ -83,8 +85,6 @@ download_and_extract() {
         fi
         [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR/$partition.img"
     done
-    end_time=$(date +%s)
-    echo "Đã giải nên tệp image: $(($end_time - $start_time))s"
 }
 
 read_info() {
@@ -106,7 +106,6 @@ read_info() {
 }
 
 repack_img_and_super() {
-    start_time=$(date +%s)
     # Kiểm tra và tạo thư mục READY_DIR nếu cần
     if [ ! -d "$READY_DIR/images" ]; then
         echo "Đang tạo thư mục $READY_DIR/images..."
@@ -165,21 +164,18 @@ repack_img_and_super() {
 
     lpmake $lpargs
     if [ -f "$super_out" ]; then
-        echo "Đóng gói thành công super.img"
-        for pname in "${SUPER_LIST[@]}"; do
-            image_sub="$READY_DIR/images/$pname.img"
-            rm -rf "$image_sub"
-        done
+        echo "Đóng gói thành công super.img"@
+        find "$READY_DIR/images" -type f -name '*.img' | grep -E "$(
+            IFS=\|
+            echo "${SUPER_LIST[*]}"
+        )" | xargs rm -rf
     else
         echo "Không thể đóng gói super.img"
         exit 1
     fi
-
-    end_time=$(date +%s)
-    echo "Đá đóng gói super.img: $(($end_time - $start_time))s"
 }
 
-function genrate_script() {
+genrate_script() {
     echo "Tạo script để flash"
     for img_file in "$IMAGES_DIR"/*.img; do
         partition_name=$(basename "$img_file" .img)
@@ -193,25 +189,21 @@ function genrate_script() {
     sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM.bat"
 }
 
-function zip_rom() {
-    start_time=$(date +%s)
+zip_rom() {
     echo "Nén super.img"
     super_img=$READY_DIR/images/super.img
     super_zst=$READY_DIR/images/super.img.zst
 
     sudo find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -19 -f "$super_img" -o "$super_zst" --rm
-
     echo "Zip rom..."
     7za a "$READY_DIR"/miui.zip "$READY_DIR"/bin/* "$READY_DIR"/images/* "$READY_DIR"/FlashROM.bat -y -mx9
     md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
     rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"
     mv "$READY_DIR/miui.zip" "$READY_DIR/$rom_name"
-    end_time=$(date +%s)
-    echo "Đã đóng gói rom: $(($end_time - $start_time))s"
 }
 
-function remove_bloatware() {
+remove_bloatware() {
     echo "Remove bloatware packages"
     bloatware=('product/data-app/com.iflytek.inputmethod.miui' 'product/data-app/BaiduIME' 'product/data-app/MiRadio' 'product/data-app/MIUIDuokanReader' 'product/data-app/SmartHome' 'product/data-app/MIUIVirtualSim' 'product/data-app/NewHomeMIUI15' 'product/data-app/MIUIGameCenter' 'product/data-app/MIUIYoupin' 'product/data-app/MIService' 'product/data-app/MIUIMiDrive' 'product/data-app/MIUIVipAccount' 'product/data-app/MIUIXiaoAiSpeechEngine' 'product/data-app/MIUIEmail' 'product/data-app/Health' 'product/app/UPTsmService' 'product/app/MIUISuperMarket' 'product/data-app/MiShop' 'product/data-app/MIUIMusicT' 'product/data-app/MIGalleryLockscreen-MIUI15' 'product/data-app/MIpay' 'product/priv-app/MIUIBrowser' 'product/priv-app/MiGameCenterSDKService' 'product/app/PaymentService' 'product/app/system' 'product/app/XiaoaiRecommendation' 'product/app/AiAsstVision' 'product/app/MIUIAiasstService' 'product/priv-app/MIUIYellowPage' 'product/priv-app/MIUIAICR' 'product/app/VoiceAssistAndroidT' 'product/priv-app/MIUIQuickSearchBox' 'product/app/OtaProvision' 'product/app/MiteeSoterService' 'product/data-app/ThirdAppAssistant' 'product/app/MIS' 'product/app/HybridPlatform' 'product/priv-app/VoiceTrigger' 'system_ext/app/digitalkey' 'product/app/MIUIgreenguard' 'product/app/MiBugReport' 'product/app/MSA' 'system/system/priv-app/Stk1' 'product/app/MiteeSoterService' 'system_ext/app/MiuiDaemon' 'product/app/MIUIReporter' 'product/app/Updater' 'product/app/WMService' 'product/app/SogouInput' 'system/system/app/Stk' 'product/app/CarWith' 'product/priv-app/Backup' 'product/priv-app/MIUICloudBackup' 'product/priv-app/MIUIContentExtension' 'product/priv-app/GooglePlayServicesUpdater' 'product/app/MIUISecurityInputMethod')
     for pkg in "${bloatware[@]}"; do
@@ -222,9 +214,108 @@ function remove_bloatware() {
     done
 }
 
-function add_vn() {
+add_vn() {
     echo "Add VietNameses"
     cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
+}
+
+disable_avb_and_dm_verity() {
+    echo 'Đang vô hiệu hóa xác minh AVB và mã hóa dữ liệu'
+    # find "$EXTRACTED_DIR/" -type f -name 'fstab.*' | while read -r file; do
+    find "$EXTRACTED_DIR/" -path "*/etc/*" -type f -name 'fstab.*' | while read -r file; do
+        echo "Xử lý: $file"
+        sed -i -E \
+            -e 's/,avb(=[^,]+)?,/,/' \
+            -e 's/,avb_keys=[^,]+avbpubkey//' \
+            -e 's/,fileencryption=[^,]+,/,/' \
+            -e 's/,metadata_encryption=[^,]+,/,/' \
+            -e 's/,keydirectory=[^,]+,/,/' \
+            "$file"
+    done
+
+    # # Thêm # và khoảng trắng vào đầu các dòng bắt đầu bằng "overlay"
+    # sed -i '/^overlay/ s/^/# &/' "$file"
+}
+
+google_photo() {
+    echo "Modding google photos"
+    mkdir -p "$OUT_DIR/tmp"
+    cp -rf "$EXTRACTED_DIR/system/system/framework/framework.jar" "$OUT_DIR/tmp/"
+    $APKTOOL -d -f -t "$OUT_DIR/tmp/framework.jar" -o "$OUT_DIR/tmp/framework_out"
+    echo "Done modding google photos"
+}
+
+# Replace Smali code in an APK or JAR file, without supporting resource patches.
+# $1: Target APK/JAR file
+# $2: Target Smali file (supports relative paths for Smali files)
+# $3: Value to be replaced
+# $4: Replacement value
+
+decompile_smali() {
+    local targetfilefullpath="$1"
+    local tmp="${OUT_DIR}/tmp"
+    local targetfilename=$(basename "$targetfilefullpath")
+    local foldername="${targetfilename%.*}"
+
+    echo "Decompiling $targetfilename"
+
+    # Xóa thư mục tạm thời nếu tồn tại và tạo lại thư mục
+    rm -rf "$tmp/$foldername/"
+    mkdir -p "$tmp/$foldername/"
+
+    # Sao chép tệp mục tiêu vào thư mục tạm thời
+    cp -rf "$targetfilefullpath" "$tmp/$foldername/"
+
+    # Giải nén các tệp .dex từ tệp mục tiêu
+    7za x -y "$tmp/$foldername/$targetfilename" "*.dex" -o"$tmp/$foldername" >/dev/null
+
+    # Lặp qua các tệp .dex và decompile
+    for dexfile in "$tmp/$foldername"/*.dex; do
+        if [[ -e "$dexfile" ]]; then
+            smalifname=$(basename "${dexfile%.*}")
+            ${BAKSMALI_COMMAND} d --api ${sdk_version} "$dexfile" -o "$tmp/$foldername/$smalifname" # 2>&1 || echo "ERROR Baksmaling failed"
+            echo "Decompiled $smalifname completed"
+        else
+            echo "No .dex files found in $tmp/$foldername"
+        fi
+        unset dexfile
+    done
+}
+
+recompile_smali() {
+    echo "Recompiling $targetfilename"
+    local targetfilefullpath="$1"
+    local tmp="${OUT_DIR}/tmp"
+    local targetfilename=$(basename $targetfilefullpath)
+    local foldername=${targetfilename%.*}
+
+    for dir in "$tmp/$foldername"/*/; do
+        if [[ -d "$dir" ]]; then
+            local dir_name=$(basename "$dir")
+            ${SMALI_COMMAND} a --api ${sdk_version} $tmp/$foldername/${dir_name} -o $tmp/$foldername/${dir_name}.dex # >/dev/null 2>&1 || echo "ERROR Smaling failed"
+            pushd $tmp/$foldername/ >/dev/null || exit
+            7za a -y -mx0 -tzip $targetfilename ${dir_name}.dex >/dev/null 2>&1 || echo "Failed to modify $targetfilename"
+            popd >/dev/null || exit
+            echo "Recompiled $dir_name completed"
+        fi
+        unset dir
+    done
+
+    if [[ $targetfilename == *.apk ]]; then
+        echo "APK file detected, initiating ZipAlign process..."
+        rm -rf ${targetfilefullpath}
+        zipalign -p -f -v 4 $tmp/$foldername/$targetfilename ${targetfilefullpath} >/dev/null 2>&1 || echo "zipalign error,please check for any issues"
+        echo "APK ZipAlign process completed."
+        echo "Copying APK to target ${targetfilefullpath}"
+    else
+        echo "Copying file to target ${targetfilefullpath}"
+        cp -rf $tmp/$foldername/$targetfilename ${targetfilefullpath}
+    fi
+
+    rm -rf $tmp/$foldername
+    if [ -d "$tmp" ] && [ -z "$(ls -A "$tmp")" ]; then
+        rm -rf "$tmp"
+    fi
 }
 #-----------------------------------------------------------------------------------------------------------------------------------
 
@@ -261,32 +352,28 @@ function add_vn() {
 #     fi
 # done
 
-# echo "Copying files to build folder"
-#  split --bytes=15M --numeric-suffixes=1 --suffix-length=1 Phonesky.apk Phonesky.apk.
-# cat "$GITHUB_WORKSPACE"/lib/files/product/app/Gboard/Gboard.apk.* >$GITHUB_WORKSPACE/lib/files/product/app/Gboard/Gboard.apk
-# rm "$GITHUB_WORKSPACE"/lib/files/product/app/Gboard/Gboard.apk.*
-# cat "$GITHUB_WORKSPACE"/lib/files/product/priv-app/Phonesky/Phonesky.apk.* >$GITHUB_WORKSPACE/lib/files/product/priv-app/Phonesky/Phonesky.apk
-# rm "$GITHUB_WORKSPACE"/lib/files/product/priv-app/Phonesky/Phonesky.apk.*
-# sudo cp -rf "$GITHUB_WORKSPACE/lib/files/." "$GITHUB_WORKSPACE/images/"
-
 function main() {
-    start_time=$(date +%s)
-    # download_and_extract
+    download_and_extract
     read_info
+    disable_avb_and_dm_verity
+
     # modify
     remove_bloatware
     add_vn
 
-    # repack_img_and_super
+    # build
+    repack_img_and_super
     genrate_script
     # zip_rom
     # set_info_release
-
-    end_time=$(date +%s)
-    echo "Build took $(($end_time - $start_time)) seconds"
 }
+read_info
+# main
+framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+powerkeeper="$EXTRACTED_DIR"/system/system/app/PowerKeeper/PowerKeeper.apk
+decompile_smali "$powerkeeper"
+recompile_smali "$powerkeeper"
 
-main
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
 # echo "rom_name=$rom_name" >>"$GITHUB_ENV"
 # echo "os_version=$os_version" >>"$GITHUB_ENV"
