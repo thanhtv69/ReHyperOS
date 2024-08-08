@@ -20,13 +20,13 @@ if match:
 
     # Các mẫu thay thế
     patterns = {
-        'BRAND': r'(const-string v0, "BRAND"\n+\s+const-string v1, ")([^"]+)',
-        'PRODUCT': r'(const-string v0, "PRODUCT"\n+\s+const-string v1, ")([^"]+)',
-        'DEVICE': r'(const-string v0, "DEVICE"\n+\s+const-string v1, ")([^"]+)',
-        'MANUFACTURER': r'(const-string v0, "MANUFACTURER"\n+\s+const-string v1, ")([^"]+)',
-        'MODEL': r'(const-string v0, "MODEL"\n+\s+const-string v1, ")([^"]+)',
-        'FINGERPRINT': r'(const-string v0, "FINGERPRINT"\n+\s+const-string v1, ")([^"]+)',
-        'ID': r'(const-string v0, "ID"\n+\s+const-string v1, ")([^"]+)',
+        'BRAND': r'(const-string \w+, "BRAND"\n+\s+const-string.* \w+, ")([^"]+)',
+        'PRODUCT': r'(const-string \w+, "PRODUCT"\n+\s+const-string.* \w+, ")([^"]+)',
+        'DEVICE': r'(const-string \w+, "DEVICE"\n+\s+const-string.* \w+, ")([^"]+)',
+        'MANUFACTURER': r'(const-string \w+, "MANUFACTURER"\n+\s+const-string.* \w+, ")([^"]+)',
+        'MODEL': r'(const-string \w+, "MODEL"\n+\s+const-string.* \w+, ")([^"]+)',
+        'FINGERPRINT': r'(const-string \w+, "FINGERPRINT"\n+\s+const-string.* \w+, ")([^"]+)',
+        'ID': r'(const-string \w+, "ID"\n+\s+const-string.* \w+, ")([^"]+)',
     }
 
     # Thay thế các giá trị trong mã
