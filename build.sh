@@ -93,7 +93,7 @@ read_info() {
     vendor_build_prop="$EXTRACTED_DIR/vendor/build.prop"
 
     # Đọc thông tin sdk_version
-    $sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
+    sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
 
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
@@ -339,7 +339,7 @@ function main() {
     decompile_smali "$miui_framework"
     decompile_smali "$miui_services"
 
-    python3 "${PROJECT_DIR}/fw_patcher.py"
+    sudo python3 "${PROJECT_DIR}/fw_patcher.py"
     google_photo
 
     recompile_smali "$framework"
@@ -367,7 +367,8 @@ decompile_smali "$framework"
 decompile_smali "$services"
 decompile_smali "$miui_framework"
 decompile_smali "$miui_services"
-python3 "${PROJECT_DIR}/fw_patcher.py"
+
+sudo python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
 # echo "rom_name=$rom_name" >>"$GITHUB_ENV"
 # echo "os_version=$os_version" >>"$GITHUB_ENV"
