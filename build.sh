@@ -335,17 +335,17 @@ function main() {
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
     decompile_smali "$framework"
-    decompile_smali "$services"
-    decompile_smali "$miui_framework"
-    decompile_smali "$miui_services"
+    # decompile_smali "$services"
+    # decompile_smali "$miui_framework"
+    # decompile_smali "$miui_services"
 
-    python3 "${PROJECT_DIR}/fw_patcher.py"
+    # python3 "${PROJECT_DIR}/fw_patcher.py"
     google_photo
 
     recompile_smali "$framework"
-    recompile_smali "$services"
-    recompile_smali "$miui_framework"
-    recompile_smali "$miui_services"
+    # recompile_smali "$services"
+    # recompile_smali "$miui_framework"
+    # recompile_smali "$miui_services"
     #==============================================
     # build
     repack_img_and_super
@@ -353,14 +353,14 @@ function main() {
     zip_rom
     # set_info_release
 }
-# main
-framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
-services="$EXTRACTED_DIR"/system/system/framework/services.jar
-miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
-miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
+main
+# framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+# services="$EXTRACTED_DIR"/system/system/framework/services.jar
+# miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
+# miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 # powerkeeper="$EXTRACTED_DIR"/system/system/app/PowerKeeper/PowerKeeper.apk
 
-read_info
+# read_info
 # google_photo
 # recompile_smali "$framework"
 # decompile_smali "$framework"
@@ -368,7 +368,7 @@ read_info
 # decompile_smali "$miui_framework"
 # decompile_smali "$miui_services"
 
-python3 "${PROJECT_DIR}/fw_patcher.py"
+# python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
 # echo "rom_name=$rom_name" >>"$GITHUB_ENV"
 # echo "os_version=$os_version" >>"$GITHUB_ENV"
