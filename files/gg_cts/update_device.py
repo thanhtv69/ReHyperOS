@@ -12,7 +12,7 @@ with open(file_path, 'r', encoding='utf-8') as file:
     content = file.read()
 
 # Mẫu tìm kiếm
-pattern = r'"com\.google\.android\.gms"(?:\n.*)+    :cond_97'
+pattern = r'"com\.google\.android\.gms"(?:\n.*)+.*com.google\.android\.apps\.photos'
 
 match = re.search(pattern, content)
 if match:
@@ -25,7 +25,8 @@ if match:
         'DEVICE': r'(const-string v0, "DEVICE"\n+\s+const-string v1, ")([^"]+)',
         'MANUFACTURER': r'(const-string v0, "MANUFACTURER"\n+\s+const-string v1, ")([^"]+)',
         'MODEL': r'(const-string v0, "MODEL"\n+\s+const-string v1, ")([^"]+)',
-        'FINGERPRINT': r'(const-string v0, "FINGERPRINT"\n+\s+const-string v1, ")([^"]+)'
+        'FINGERPRINT': r'(const-string v0, "FINGERPRINT"\n+\s+const-string v1, ")([^"]+)',
+        'ID': r'(const-string v0, "ID"\n+\s+const-string v1, ")([^"]+)',
     }
 
     # Thay thế các giá trị trong mã
