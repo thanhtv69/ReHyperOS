@@ -244,7 +244,7 @@ disable_avb_and_dm_verity() {
 
 google_photo() {
     echo "Modding google photos"
-    python3 "${FILES_DIR}/gg_cts/update_device.py"
+    # python3 "${FILES_DIR}/gg_cts/update_device.py"
     local target_folder="${OUT_DIR}/tmp/framework"
     local application_smali="$target_folder/classes/android/app/Application.smali"
     local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
@@ -339,7 +339,7 @@ function main() {
     decompile_smali "$miui_framework"
     decompile_smali "$miui_services"
 
-    sudo python3 "${PROJECT_DIR}/fw_patcher.py"
+    python3 "${PROJECT_DIR}/fw_patcher.py"
     google_photo
 
     recompile_smali "$framework"
@@ -363,12 +363,12 @@ miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 read_info
 # google_photo
 # recompile_smali "$framework"
-decompile_smali "$framework"
-decompile_smali "$services"
-decompile_smali "$miui_framework"
-decompile_smali "$miui_services"
+# decompile_smali "$framework"
+# decompile_smali "$services"
+# decompile_smali "$miui_framework"
+# decompile_smali "$miui_services"
 
-sudo python3 "${PROJECT_DIR}/fw_patcher.py"
+python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
 # echo "rom_name=$rom_name" >>"$GITHUB_ENV"
 # echo "os_version=$os_version" >>"$GITHUB_ENV"

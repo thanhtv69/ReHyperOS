@@ -13,8 +13,8 @@ def framework_patcher(framework: ApkFile, services: ApkFile, miui_framework: Apk
     repo_path = 'FrameworkPatcher'
     if os.path.exists(repo_path):
         # Hoàn tác các thay đổi và kéo cập nhật từ kho lưu trữ
-        subprocess.run(['git', 'reset', '--hard'], cwd=repo_path, check=True)
-        subprocess.run(['git', 'clean', '-fdx'], cwd=repo_path, check=True)
+        subprocess.run(['git', 'reset', '--hard'], cwd=repo_path, check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(['git', 'clean', '-fdx'], cwd=repo_path, check=True, stdout=subprocess.DEVNULL)
         subprocess.run(['git', 'pull'], cwd=repo_path, check=True)
     else:
         subprocess.run(
@@ -45,8 +45,9 @@ def framework_patcher(framework: ApkFile, services: ApkFile, miui_framework: Apk
                     src_path = os.path.join(apk.output, src_dir)
                     dst_path = os.path.join('FrameworkPatcher', dst_dir)
 
-                shutil.rmtree(dst_path, ignore_errors=True)
-                shutil.move(src_path, dst_path)
+                # shutil.rmtree(dst_path, ignore_errors=True)
+                # shutil.move(src_path, dst_path)
+                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
 
     copy_directory(framework)
     copy_directory(services)
