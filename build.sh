@@ -237,50 +237,6 @@ disable_avb_and_dm_verity() {
     # sed -i '/^overlay/ s/^/# &/' "$file"
 }
 
-
-#!/bin/bash
-
-# Hàm chính để tải dữ liệu, trích xuất giá trị và sửa đổi tệp tin Smali
-update_play_integrity() {
-    local smali_file="$1"
-    if [ ! -f "$smali_file" ]; then
-        echo "File not found: $smali_file"
-        return 1
-    fi
-    
-    json_data=$(curl -s  "https://raw.githubusercontent.com/chiteroman/PlayIntegrityFix/main/module/pif.json" )
-    
-    if [ -z "$json_data" ]; then
-        echo "Failed to fetch JSON data."
-        return 1
-    fi
-    echo $json_data
-    
-    # Trích xuất các giá trị từ JSON
-    BRAND=$(echo "$json_data" | jq -r '.BRAND')
-    DEVICE=$(echo "$json_data" | jq -r '.DEVICE')
-    FINGERPRINT=$(echo "$json_data" | jq -r '.FINGERPRINT')
-    MANUFACTURER=$(echo "$json_data" | jq -r '.MANUFACTURER')
-    MODEL=$(echo "$json_data" | jq -r '.MODEL')
-    PRODUCT=$(echo "$json_data" | jq -r '.PRODUCT')
-    
-    
-    if [ -z "$BRAND" ] || [ -z "$DEVICE" ] || [ -z "$FINGERPRINT" ] || [ -z "$MANUFACTURER" ] || [ -z "$MODEL" ] || [ -z "$PRODUCT" ]; then
-        echo "One or more values are missing from the JSON data."
-        return 1
-    fi
-    
-    # Cập nhật các trường trong tệp mục tiêu
-    sed -i -e "s/^const-string v0, \"BRAND\"/const-string v0, \"BRAND\"\n    const-string v1, \"$BRAND\"/g" \
-    -e "s/^const-string v0, \"FINGERPRINT\"/const-string v0, \"FINGERPRINT\"\n    const-string v1, \"$FINGERPRINT\"/g" \
-    -e "s/^const-string v0, \"MANUFACTURER\"/const-string v0, \"MANUFACTURER\"\n    const-string v1, \"$MANUFACTURER\"/g" \
-    -e "s/^const-string v0, \"MODEL\"/const-string v0, \"MODEL\"\n    const-string v1, \"$MODEL\"/g" \
-    -e "s/^const-string v0, \"PRODUCT\"/const-string v0, \"PRODUCT\"\n    const-string v1, \"$PRODUCT\"/g" \
-    "$smali_file"
-    
-    echo "Smali file updated successfully."
-}
-
 google_photo() {
     echo "Modding google photos"
     local target_folder="${OUT_DIR}/tmp/framework"
@@ -290,8 +246,6 @@ google_photo() {
     sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' $application_smali
     cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
     cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
-    
-    update_smali_from_json "$application_stub_smali"
     
     echo "Done modding google photos"
 }
@@ -381,12 +335,12 @@ function main() {
     zip_rom
     # set_info_release
 }
-# main
-framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+main
+# framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
 # powerkeeper="$EXTRACTED_DIR"/system/system/app/PowerKeeper/PowerKeeper.apk
 
 # read_info
-google_photo
+# google_photo
 # recompile_smali "$framework"
 # decompile_smali "$framework"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
