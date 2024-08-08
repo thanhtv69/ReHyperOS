@@ -30,6 +30,7 @@ EXTRACT_LIST=('product' 'system' 'system_ext' 'vendor')
 SUPER_LIST=('mi_ext' 'odm' 'product' 'system' 'system_dlkm' 'system_ext' 'vendor' 'vendor_dlkm' 'odm_dlkm')
 super_size=9126805504
 build_type="erofs" # erofs - ext4
+sdk_version="34"
 
 zip_name=$(echo ${URL} | cut -d"/" -f5)
 os_version=$(echo ${URL} | cut -d"/" -f4)
@@ -92,7 +93,7 @@ read_info() {
     vendor_build_prop="$EXTRACTED_DIR/vendor/build.prop"
 
     # Đọc thông tin sdk_version
-    sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
+    $sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
 
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
@@ -243,7 +244,7 @@ disable_avb_and_dm_verity() {
 
 google_photo() {
     echo "Modding google photos"
-    py "${FILES_DIR}/gg_cts/update_device.py"
+    python3 "${FILES_DIR}/gg_cts/update_device.py"
     local target_folder="${OUT_DIR}/tmp/framework"
     local application_smali="$target_folder/classes/android/app/Application.smali"
     local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
@@ -330,9 +331,21 @@ function main() {
     add_vn
     #==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+    services="$EXTRACTED_DIR"/system/system/framework/services.jar
+    miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
+    miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
     decompile_smali "$framework"
+    decompile_smali "$services"
+    decompile_smali "$miui_framework"
+    decompile_smali "$miui_services"
+
+    python3 "${PROJECT_DIR}/fw_patcher.py"
     google_photo
+
     recompile_smali "$framework"
+    recompile_smali "$services"
+    recompile_smali "$miui_framework"
+    recompile_smali "$miui_services"
     #==============================================
     # build
     repack_img_and_super
@@ -340,14 +353,21 @@ function main() {
     zip_rom
     # set_info_release
 }
-main
-# framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+# main
+framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+services="$EXTRACTED_DIR"/system/system/framework/services.jar
+miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
+miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 # powerkeeper="$EXTRACTED_DIR"/system/system/app/PowerKeeper/PowerKeeper.apk
 
-# read_info
+read_info
 # google_photo
 # recompile_smali "$framework"
-# decompile_smali "$framework"
+decompile_smali "$framework"
+decompile_smali "$services"
+decompile_smali "$miui_framework"
+decompile_smali "$miui_services"
+python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
 # echo "rom_name=$rom_name" >>"$GITHUB_ENV"
 # echo "os_version=$os_version" >>"$GITHUB_ENV"
