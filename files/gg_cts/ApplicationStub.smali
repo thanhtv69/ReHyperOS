@@ -639,13 +639,13 @@
 
     const-string v1, "PRODUCT"
 
-    const-string/jumbo p0, "sailfish"
+    const-string/jumbo p0, "husky_beta"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
 
     const-string v1, "DEVICE"
 
-    const-string/jumbo p0, "sailfish"
+    const-string/jumbo p0, "husky"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
 
@@ -657,19 +657,19 @@
 
     const-string v1, "MODEL"
 
-    const-string p0, "Pixel"
+    const-string p0, "Pixel 8 Pro"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
 
     const-string v1, "ID"
 
-    const-string p0, "OPM1.171019.011"
+    const-string p0, "AP31.240617.009"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
     
     const-string v1, "FINGERPRINT"
 
-    const-string p0, "google/sailfish/sailfish:8.1.0/OPM1.171019.011/4448085:user/release-keys"
+    const-string p0, "google/husky_beta/husky:15/AP31.240617.009/12094726:user/release-keys"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
 
