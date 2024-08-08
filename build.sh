@@ -350,7 +350,7 @@ function main() {
     # build
     repack_img_and_super
     genrate_script
-    zip_rom
+    # zip_rom
     # set_info_release
 }
 main
