@@ -21,9 +21,6 @@ APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner.jar"
 BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
 SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
 
-# project_dir=$(pwd)
-# work_dir=${project_dir}/out
-# tools_dir=${work_dir}/bin/$(uname)/$(uname -m)
 export PATH=$(pwd)/bin/$(uname)/$(uname -m)/:$PATH
 echo $(uname)/$(uname -m)
 
@@ -226,7 +223,7 @@ remove_bloatware() {
     done
 }
 
-add_vn() {
+add_google() {
     echo "Add VietNameses"
     cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
 }
@@ -281,6 +278,7 @@ google_photo_cts() {
 }
 
 modify() {
+    echo "Modifying features"
     sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/system_ext/etc/build.prop"
     sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/product/etc/build.prop"
 
@@ -407,41 +405,41 @@ generate_public_xml() {
     fi
 
     # Bắt đầu tạo file public.xml
-    echo '<?xml version="1.0" encoding="utf-8"?>' > "$output_file"
-    echo '<resources>' >> "$output_file"
+    echo '<?xml version="1.0" encoding="utf-8"?>' >"$output_file"
+    echo '<resources>' >>"$output_file"
 
     # Duyệt qua tất cả các file XML trong thư mục
     for file in "$input_dir"/*.xml; do
         # Lấy tên file mà không có phần mở rộng
-        local basename=$(basename "$file" .xml)
-        
+        local base_name=$(basename "$file" .xml)
+
         # Xác định loại tài nguyên dựa trên tên file
         local type=""
-        if [[ $basename == *"strings"* ]]; then
-            type="string"
-        elif [[ $basename == *"arrays"* ]]; then
-            type="array"
-        elif [[ $basename == *"plurals"* ]]; then
-            type="plurals"
-        else
-            continue  # Nếu không khớp với bất kỳ loại nào, bỏ qua file này
-        fi
-        
-        # Trích xuất tên tài nguyên và thêm vào public.xml
-        grep -oP '(?<=name=")[^"]+' "$file" | while read -r name; do
-            echo "    <public type=\"$type\" name=\"$name\" />" >> "$output_file"
+        case "$base_name" in
+        *"strings"*) type="string" ;;
+        *"arrays"*) type="array" ;;
+        *"plurals"*) type="plurals" ;;
+        *"dimen"*) type="dimen" ;;
+        *"colors"*) type="color" ;;
+        *"styles"*) type="style" ;;
+        *"attrs"*) type="attr" ;;
+        *"integers"*) type="integer" ;;
+        *"bools"*) type="bool" ;;
+        *)
+            continue # Nếu không khớp với bất kỳ loại nào, bỏ qua file này
+            ;;
+        esac
+
+        # Sử dụng grep để trích xuất các phần tử với thuộc tính name
+        grep -oP '<item[^>]*name="\K[^"]+' "$file" | while IFS= read -r name; do
+            # Ghi vào file public.xml
+            echo "    <public type=\"$type\" name=\"$name\" />" >>"$output_file"
         done
     done
 
     # Kết thúc file public.xml
-    echo '</resources>' >> "$output_file"
-
-    echo "Tạo $output_file hoàn thành!"
+    echo '</resources>' >>"$output_file"
 }
-
-# Ví dụ cách sử dụng hàm:
-# generate_public_xml "/path/to/xml/files" "public.xml"
-
 
 viet_hoa() {
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
@@ -516,6 +514,7 @@ viet_hoa() {
     ALL_DATE=$(date +%Y.%m.%d)
     SHORT_DATE=$(date +%y%m%d)
 
+    rm -rf "$vietnamese_dir/packed" >/dev/null 2>&1
     for apk_name in "${!BUILD_APK_LIST[@]}"; do
         package_name="${BUILD_APK_LIST[$apk_name]}"
         echo "Tên APK: $apk_name, Tên package: $package_name"
@@ -525,7 +524,7 @@ viet_hoa() {
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
         touch "$vietnamese_dir/$apk_name/res/values-vi/strings.xml"
-        echo -e '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' > $vietnamese_dir/$apk_name/res/values-vi/strings.xml
+        echo -e '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' >$vietnamese_dir/$apk_name/res/values-vi/strings.xml
 
         AndroidManifest="$vietnamese_dir/$apk_name/AndroidManifest.xml"
         ApktoolJson="$vietnamese_dir/$apk_name/apktool.yml"
@@ -537,14 +536,20 @@ viet_hoa() {
         cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o tmp/${apk_name}_tmp.apk
-        zipalign -f 4 tmp/${apk_name}_tmp.apk packed/${apk_name}.apk
-        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem packed/$apk_name.apk
-        # break
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o tmp/${apk_name}_tmp.apk >/dev/null 2>&1
+        zipalign -f 4 tmp/${apk_name}_tmp.apk packed/${apk_name}.apk >/dev/null 2>&1
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem packed/$apk_name.apk >/dev/null 2>&1
+        rm -rf tmp
+        if [ -f "packed/$apk_name.apk" ]; then
+            echo "Đã tạo overlay $apk_name.apk thành công"
+        else
+            echo "Tạo overlay $apk_name.apk thất bại"
+            exit 1
+        fi
     done
     cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
 
-    # rm -rf "$vietnamese_dir"
+    rm -rf "$vietnamese_dir"
     cd "$PROJECT_DIR"
 }
 
@@ -554,7 +559,7 @@ main() {
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
-    # add_vn
+    add_google
     viet_hoa
     #==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
@@ -569,14 +574,13 @@ main() {
     # build
     repack_img_and_super
     genrate_script
-    # zip_rom
+    zip_rom
     # set_info_release
 }
 
 main
 # framework_patcher
 # viet_hoa
-
 
 # python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
