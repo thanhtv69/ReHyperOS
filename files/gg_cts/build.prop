@@ -1,0 +1,27 @@
+#CTS Passed
+ro.boot.vbmeta.device_state=locked
+ro.boot.verifiedbootstate=green
+ro.boot.flash.locked=1
+ro.boot.veritymode=enforcing
+ro.boot.warranty_bit=0
+ro.warranty_bit=0
+ro.debuggable=0
+ro.secure=1
+ro.secureboot.devicelock=1
+ro.secureboot.lockstate=locked
+ro.build.type=user
+ro.build.keys=release-keys
+ro.build.tags=release-keys
+ro.vendor.boot.warranty_bit=0
+ro.vendor.warranty_bit=0
+vendor.boot.vbmeta.device_state=locked
+vendor.boot.verifiedbootstate=green
+sys.oem_unlock_allowed=0
+ro.oem_unlock_supported=0
+init.svc.flash_recovery=stopped
+ro.boot.realmebootstate=green
+ro.boot.realme.lockstate=1
+ro.crypto.state=encrypted
+sys.oem_unlock_allowed=0
+ro.oem_unlock_supported=0
+init.svc.adbd=stopped

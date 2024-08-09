@@ -4,7 +4,7 @@ GITHUB_ENV="$2"
 GITHUB_WORKSPACE="$3"
 
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
-sudo chmod 777 -R ./*
+# sudo chmod 777 -R ./*
 is_clean=$([ -n "$1" ] && echo true || echo false)
 # export PATH="./lib:$PATH"
 PROJECT_DIR=$(pwd)
@@ -16,7 +16,8 @@ FILES_DIR=$PROJECT_DIR/files
 IMAGES_DIR=$OUT_DIR/images
 EXTRACTED_DIR=$OUT_DIR/extracted
 READY_DIR=$OUT_DIR/ready_flash
-APKTOOL_COMMAND="java -jar $BIN_DIR/apktool/apktool.jar"
+APKTOOL_COMMAND="$BIN_DIR/apktool/apktool"
+APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner.jar"
 BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
 SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
 
@@ -52,17 +53,16 @@ download_and_extract() {
     payload_output=$(payload-dumper-go -l "$OUT_DIR/payload.bin")
     p_payload=($(echo "$payload_output" | grep -oP '\b\w+(?=\s\()'))
 
-    # missing_partitions=""
-    # for p in "${p_payload[@]}"; do
-    #     if [ ! -e "$IMAGES_DIR/$p.img" ]; then
-    #         if [ -z "$missing_partitions" ]; then
-    #             missing_partitions="$p"
-    #         else
-    #             missing_partitions="$missing_partitions,$p"
-    #         fi
-    #     fi
-    # done
-    missing_partitions=$(for p in "${p_payload[@]}"; do [ ! -e "$IMAGES_DIR/$p.img" ] && echo -n "${missing_partitions:+$missing_partitions,}$p"; done)
+    missing_partitions=""
+    for p in "${p_payload[@]}"; do
+        if [ ! -e "$IMAGES_DIR/$p.img" ]; then
+            if [ -z "$missing_partitions" ]; then
+                missing_partitions="$p"
+            else
+                missing_partitions="$missing_partitions,$p"
+            fi
+        fi
+    done
 
     if [ ! -z "$missing_partitions" ]; then
         echo "Đang giải nén các phân vùng thiếu: [$missing_partitions]"
@@ -79,6 +79,7 @@ download_and_extract() {
             exit 1
         fi
         echo "Đang giải nén tệp image... [$partition]"
+        rm -rf "$EXTRACTED_DIR/$partition" >/dev/null 2>&1
         extract.erofs -x -i "$IMAGES_DIR/$partition.img" -o "$EXTRACTED_DIR" >/dev/null 2>&1
         if [ ! -d "$EXTRACTED_DIR/$partition" ]; then
             echo "Giải nén $partition.img thất bại"
@@ -198,7 +199,9 @@ zip_rom() {
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -19 -f "$super_img" -o "$super_zst" --rm
     echo "Zip rom..."
-    7za a "$READY_DIR"/miui.zip "$READY_DIR"/bin/* "$READY_DIR"/images/* "$READY_DIR"/FlashROM.bat -y -mx9
+    cd $READY_DIR
+    7za -tzip a miui.zip bin/* images/* FlashROM.bat -y -mx9
+    cd $PROJECT_DIR
     md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
     rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"
     mv "$READY_DIR/miui.zip" "$READY_DIR/$rom_name"
@@ -206,15 +209,19 @@ zip_rom() {
 
 remove_bloatware() {
     echo "Remove bloatware packages"
-    bloatware=('system/system/app/BasicDreams' 'system/system/app/CarrierDefaultApp' 'system/system/app/ExtShared' 'system/system/app/PartnerBookmarksProvider' 'system/system/app/PrintRecommendationService' 'system/system/app/Protips' 'system/system/app/SimAppDialog' 'system/system/app/Traceur' 'system/system/app/WallpaperBackup' 'system/system/app/WapiCertManage' 'system/system/priv-app/BackupRestoreConfirmation' 'system/system/priv-app/BlockedNumberProvider' 'system/system/priv-app/BuiltInPrintService' 'system/system/priv-app/CallLogBackup' 'system/system/priv-app/CellBroadcastLegacyApp' 'system/system/priv-app/CellBroadcastServiceModulePlatform' 'system/system/priv-app/LiveWallpapersPicker' 'system/system/priv-app/LocalTransport' 'system/system/priv-app/ManagedProvisioning' 'system/system/priv-app/MusicFX' 'system/system/priv-app/ONS' 'system/system/priv-app/SharedStorageBackup' 'system/system/priv-app/StatementService' 'system/system/priv-app/UserDictionaryProvider' 'system_ext/app/DeviceInfo' 'system_ext/app/DeviceStatisticsService' 'system_ext/app/MiSightService' 'system_ext/app/MiuiPrintSpooler' 'system_ext/app/ModemTestBox' 'system_ext/app/WAPPushManager' 'system_ext/priv-app/EmergencyInfo' 'product/app/CameraTools_beta' 'product/app/com.xiaomi.macro' 'product/app/ConferenceDialer' 'product/app/DeviceInfoQR' 'product/app/mi_connect_service' 'product/app/MIUIAccessibility' 'product/app/MiuiContentCatcherMIUI15' 'product/app/MIUIFrequentPhrase' 'product/app/MIUIGuardProvider' 'product/app/MIUITouchAssistant' 'product/app/Music' 'product/app/OTrPBroker' 'product/app/SecurityOnetrackService' 'product/app/SwitchAccess' 'product/app/talkback' 'product/priv-app/ConfigUpdater' 'product/priv-app/MIUIBarrageV2' 'product/priv-app/MIUIBarrage' 'product/priv-app/MIUIMirror' 'product/priv-app/MIUIPersonalAssistantPhoneMIUI15' 'product/priv-app/MIUIPersonalAssistantPhoneMIUI15NEW' 'product/priv-app/RegService' 'product/priv-app/SettingsIntelligence' 'product/pangu/system/priv-app/SystemHelper' 'product/data-app/com.iflytek.inputmethod.miui' 'product/data-app/BaiduIME' 'product/data-app/MiRadio' 'product/data-app/MIUIDuokanReader' 'product/data-app/SmartHome' 'product/data-app/MIUIVirtualSim' 'product/data-app/NewHomeMIUI15' 'product/data-app/MIUIGameCenter' 'product/data-app/MIUIYoupin' 'product/data-app/MIService' 'product/data-app/MIUIMiDrive' 'product/data-app/MIUIVipAccount' 'product/data-app/MIUIXiaoAiSpeechEngine' 'product/data-app/MIUIEmail' 'product/data-app/Health' 'product/app/UPTsmService' 'product/app/MIUISuperMarket' 'product/data-app/MiShop' 'product/data-app/MIUIMusicT' 'product/data-app/MIGalleryLockscreen-MIUI15' 'product/data-app/MIpay' 'product/priv-app/MIUIBrowser' 'product/priv-app/MiGameCenterSDKService' 'product/app/PaymentService' 'product/app/system' 'product/app/XiaoaiRecommendation' 'product/app/AiAsstVision' 'product/app/MIUIAiasstService' 'product/priv-app/MIUIYellowPage' 'product/priv-app/MIUIAICR' 'product/app/VoiceAssistAndroidT' 'product/priv-app/MIUIQuickSearchBox' 'product/app/OtaProvision' 'product/app/MiteeSoterService' 'product/data-app/ThirdAppAssistant' 'product/app/MIS' 'product/app/HybridPlatform' 'product/priv-app/VoiceTrigger' 'system_ext/app/digitalkey' 'product/app/MIUIgreenguard' 'product/app/MiBugReport' 'product/app/CatchLog' 'product/app/MSA' 'system/system/priv-app/Stk1' 'product/app/MiteeSoterService' 'system_ext/app/MiuiDaemon' 'product/app/MIUIReporter' 'product/app/Updater' 'product/app/WMService' 'product/app/SogouInput' 'system/system/app/Stk' 'product/app/CarWith' 'product/priv-app/Backup' 'product/priv-app/MIUICloudBackup' 'product/priv-app/MIUIContentExtension' 'product/priv-app/GooglePlayServicesUpdater' 'product/app/MIUISecurityInputMethod' 'product/app/AnalyticsCore' 'product/etc/permissions/cn.google.services.xml')
-    for pkg in "${bloatware[@]}"; do
-        path="$EXTRACTED_DIR/$pkg"
-        if [[ -d "$path" ]]; then
-            echo "Removing directory $pkg"
-            rm -rf "$path"
-        elif [[ -f "$path" ]]; then
-            echo "Removing file $pkg"
-            rm -f "$path"
+    tr -d '\r' <"$PROJECT_DIR/bloatware" | tr -s '\n' | while IFS= read -r pkg; do
+        pkg=$(echo "$pkg" | xargs) # Loại bỏ khoảng trắng thừa
+        if [[ -n "$pkg" && "$pkg" != \#* ]]; then
+            path="$EXTRACTED_DIR/$pkg"
+            if [[ -d "$path" ]]; then
+                echo "Removing directory $path"
+                rm -rf "$path"
+            elif [[ -f "$path" ]]; then
+                echo "Removing file $path"
+                rm -f "$path"
+            else
+                echo "Path $path does not exist."
+            fi
         fi
     done
 }
@@ -242,18 +249,93 @@ disable_avb_and_dm_verity() {
     # sed -i '/^overlay/ s/^/# &/' "$file"
 }
 
-google_photo() {
+google_photo_cts() {
     echo "Modding google photos"
-    # python3 "${FILES_DIR}/gg_cts/update_device.py"
-    local target_folder="${OUT_DIR}/tmp/framework"
-    local application_smali="$target_folder/classes/android/app/Application.smali"
-    local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
-    sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
-    sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' $application_smali
-    cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
-    cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
 
+    # TODO switch snap and mtk
+    7za x "$FILES_DIR/gg_cts/mtk.zip" "android/app" -o"$OUT_DIR/tmp/framework/classes" -aoa >/dev/null 2>&1
+    7za x "$FILES_DIR/gg_cts/mtk.zip" "android/security" -o"$OUT_DIR/tmp/framework/classes3" -aoa >/dev/null 2>&1
+    7za x "$FILES_DIR/gg_cts/mtk.zip" "com" -o"$OUT_DIR/tmp/framework/classes5" -aoa >/dev/null 2>&1
+
+    local build_prop_org="$EXTRACTED_DIR/system/system/build.prop"
+    local build_prop_mod="$FILES_DIR/gg_cts/build.prop"
+    while IFS= read -r line; do
+        if ! grep -Fxq "$line" "$build_prop_org"; then
+            sed -i "/# end of file/i $line" "$build_prop_org"
+        fi
+    done <$build_prop_mod
+
+    local white_key_org="$EXTRACTED_DIR/system_ext/etc/cust_prop_white_keys_list"
+    local white_key_mod="$FILES_DIR/gg_cts/cust_prop_white_keys_list"
+    while IFS= read -r line; do
+        if ! grep -Fxq "$line" "$white_key_org"; then
+            printf "\n%s" "$line" >>"$white_key_org"
+        fi
+    done <$white_key_mod
+
+    mkdir -p "$EXTRACTED_DIR/product/app/SoraOS"
+    cp -f "$FILES_DIR/gg_cts/SoraOS.apk" "$EXTRACTED_DIR/product/app/SoraOS/SoraOS.apk"
+
+    sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
     echo "Done modding google photos"
+}
+
+modify() {
+    sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/system_ext/etc/build.prop"
+    sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/product/etc/build.prop"
+
+    sed -i 's/<bool name=\"support_hfr_video_pause\">false<\/bool>/<bool name=\"support_hfr_video_pause\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
+    sed -i 's/<bool name=\"support_dolby\">false<\/bool>/<bool name=\"support_dolby\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
+    sed -i 's/<bool name=\"support_video_hfr_mode\">false<\/bool>/<bool name=\"support_video_hfr_mode\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
+    sed -i 's/<bool name=\"support_hifi\">false<\/bool>/<bool name=\"support_hifi\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
+}
+
+framework_patcher() {
+    cd $OUT_DIR
+    local repo_dir="FrameworkPatcher"
+    local repo_url="https://github.com/Jefino9488/FrameworkPatcher.git"
+
+    if [ ! -d "$repo_dir" ]; then
+        git clone --depth=1 "$repo_url" "$repo_dir" &>/dev/null && echo "Clone thành công." || echo "Clone thất bại."
+    else
+        cd "$repo_dir" || {
+            echo "Không thể chuyển vào thư mục."
+            return 1
+        }
+        git fetch --all &>/dev/null
+        git reset --hard origin/main &>/dev/null
+        git pull &>/dev/null && echo "Cập nhật thành công." || echo "Cập nhật thất bại."
+    fi
+
+    mv -rf "$OUT_DIR/tmp/framework/classes" "$repo_dir/classes"
+    mv -rf "$OUT_DIR/tmp/framework/classes2" "$repo_dir/classes2"
+    mv -rf "$OUT_DIR/tmp/framework/classes3" "$repo_dir/classes3"
+    mv -rf "$OUT_DIR/tmp/framework/classes4" "$repo_dir/classes4"
+    mv -rf "$OUT_DIR/tmp/framework/classes5" "$repo_dir/classes5"
+    mv -rf "$OUT_DIR/tmp/services/classes" "$repo_dir/services_classes"
+    mv -rf "$OUT_DIR/tmp/services/classes2" "$repo_dir/services_classes2"
+    mv -rf "$OUT_DIR/tmp/services/classes3" "$repo_dir/services_classes3"
+    mv -rf "$OUT_DIR/tmp/miui-framework/classes" "$repo_dir/miui_framework_classes"
+    mv -rf "$OUT_DIR/tmp/miui-services/classes" "$repo_dir/miui_services_classes"
+
+    python3 "framework_patch.py"
+    python3 "miui-service_Patch.py"
+    python3 "miui-framework_patch.py"
+    python3 "miui-service_Patch.py"
+
+    cp -rf "$repo_dir/magisk_module/system" $EXTRACTED_DIR
+
+    mv -rf "$repo_dir/classes" "$OUT_DIR/tmp/framework/classes"
+    mv -rf "$repo_dir/classes2" "$OUT_DIR/tmp/framework/classes2"
+    mv -rf "$repo_dir/classes3" "$OUT_DIR/tmp/framework/classes3"
+    mv -rf "$repo_dir/classes4" "$OUT_DIR/tmp/framework/classes4"
+    mv -rf "$repo_dir/classes5" "$OUT_DIR/tmp/framework/classes5"
+    mv -rf "$repo_dir/services_classes" "$OUT_DIR/tmp/services/classes"
+    mv -rf "$repo_dir/services_classes2" "$OUT_DIR/tmp/services/classes2"
+    mv -rf "$repo_dir/services_classes3" "$OUT_DIR/tmp/services/classes3"
+    mv -rf "$repo_dir/miui_framework_classes" "$OUT_DIR/tmp/miui-framework/classes"
+    mv -rf "$repo_dir/miui_services_classes" "$OUT_DIR/tmp/miui-services/classes"
+    cd $PROJECT_DIR
 }
 
 decompile_smali() {
@@ -322,30 +404,132 @@ recompile_smali() {
         rm -rf "$tmp"
     fi
 }
+
+viet_hoa() {
+    local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
+    local vietnamese_dir="$OUT_DIR/vietnamese"
+    local vietnamese_master="$vietnamese_dir/MIUI-14-XML-Vietnamese-master/Vietnamese/main"
+
+    mkdir -p "$vietnamese_dir/packed"
+    cd "$vietnamese_dir"
+
+    # Tải file ZIP từ URL và lưu với tên đã chỉ định
+    curl --progress-bar --location --remote-name "$url" >/dev/null 2>&1
+    7za x master.zip -aoa >/dev/null 2>&1
+
+    declare -A BUILD_APK_LIST=(
+        ["AuthManager"]="com.lbe.security.miui"
+        ["Calendar"]="com.android.calendar"
+        ["Cit"]="com.miui.cit"
+        ["CleanMaster"]="com.miui.cleanmaster"
+        ["CloudBackup"]="com.miui.cloudbackup"
+        ["CloudService"]="com.miui.cloudservice"
+        ["Contacts"]="com.android.contacts"
+        ["InCallUI"]="com.android.incallui"
+        ["MiCloudSync"]="com.miui.micloudsync"
+        ["MiGalleryLockscreen"]="com.mfashiongallery.emag"
+        ["MiMover"]="com.miui.huanji"
+        ["MiSettings"]="com.xiaomi.misettings"
+        ["MiShare"]="com.miui.mishare.connectivity"
+        ["MiuiContentCatcher"]="com.miui.contentcatcher"
+        ["MiuiFreeformService"]="com.miui.freeform"
+        ["MiuiGallery"]="com.miui.gallery"
+        ["MiuiHome"]="com.miui.home"
+        ["MiuiPackageInstaller"]="com.miui.packageinstaller"
+        ["MiuiSystemUI"]="com.android.systemui"
+        ["Mms"]="com.android.mms"
+        ["PersonalAssistant"]="com.miui.personalassistant"
+        ["PowerKeeper"]="com.miui.powerkeeper"
+        ["SecurityAdd"]="com.miui.securityadd"
+        ["SecurityCenter"]="com.miui.securitycenter"
+        ["Settings"]="com.android.settings"
+        ["TeleService"]="com.android.phone"
+        ["ThemeManager"]="com.android.thememanager"
+        ["Weather"]="com.miui.weather2"
+        ["XiaomiAccount"]="com.xiaomi.account"
+        ["XiaomiSimActivateService"]="com.xiaomi.simactivate.service"
+        ["com.xiaomi.macro"]="com.xiaomi.macro"
+        ["MiLinkService"]="com.milink.service"
+        ["framework-res"]="android"
+        ["NQNfcNci"]="com.android.nfc"
+        ["MiuiBluetooth"]="com.xiaomi.bluetooth"
+        ["AICallAssistant"]="com.xiaomi.aiasst.service"
+        ["GalleryEditor"]="com.miui.mediaeditor"
+        ["MiAI"]="com.miui.voiceassist"
+        ["MiAITranslate"]="com.xiaomi.aiasst.vision"
+        ["SmartCards"]="com.miui.tsmclient"
+        ["Taplus"]="com.miui.contentextension"
+        ["ContactsProvider"]="com.android.providers.contacts"
+        ["TelephonyProvider"]="com.android.providers.telephony"
+        ["CalendarProvider"]="com.android.providers.calendar"
+        ["Telecom"]="com.android.server.telecom"
+        ["MiuiAod"]="com.miui.aod"
+        ["MiuiCamera"]="com.android.camera"
+        ["MiuixEditor"]="com.miui.phrase"
+        ["DownloadProvider"]="com.android.providers.downloads"
+        ["DownloadProviderUi"]="com.android.providers.downloads.ui"
+        ["PermissionController"]="com.android.permissioncontroller"
+        ["VpnDialogs"]="com.android.vpndialogs"
+        ["MiuiExtraPhoto"]="com.miui.extraphoto"
+        ["Provision"]="com.android.provision"
+        ["Traceur"]="com.android.traceur"
+    )
+
+    ALL_DATE=$(date +%Y.%m.%d)
+    SHORT_DATE=$(date +%y%m%d)
+
+    for apk_name in "${!BUILD_APK_LIST[@]}"; do
+        package_name="${BUILD_APK_LIST[$apk_name]}"
+        echo "Tên APK: $apk_name, Tên package: $package_name"
+        rm -rf "$vietnamese_dir/$apk_name"
+        mkdir -p "$vietnamese_dir/$apk_name/original/META-INF"
+        mkdir -p "$vietnamese_dir/$apk_name/res/values"
+        mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
+        touch "$vietnamese_dir/$apk_name/apktool.yml"
+        touch "$vietnamese_dir/$apk_name/original/META-INF/CERT.RSA"
+        touch "$vietnamese_dir/$apk_name/original/META-INF/CERT.SF"
+        touch "$vietnamese_dir/$apk_name/original/META-INF/MANIFEST.MF"
+        touch "$vietnamese_dir/$apk_name/res/values-vi/strings.xml"
+        echo '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' >$vietnamese_dir/$apk_name/res/values-vi/strings.xml
+        echo "Manifest-Version: 1.0" >$vietnamese_dir/$apk_name/original/META-INF/MANIFEST.MF
+        echo "Created-By: 1.8.0_221 (Oracle Corporation)" >>$vietnamese_dir/$apk_name/original/META-INF/MANIFEST.MF
+        AndroidManifest="$vietnamese_dir/$apk_name/AndroidManifest.xml"
+        ApktoolJson="$vietnamese_dir/$apk_name/apktool.yml"
+
+        Code1="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"6.0-$SHORT_DATE\"\n    package=\"overlay.$package_name\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
+        Code2="version: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
+        echo -e $Code1 >"$AndroidManifest"
+        echo -e $Code2 >"$ApktoolJson"
+
+        cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
+
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o tmp/$apk_name.apk >/dev/null 2>&1
+        zipalign -f 4 tmp/$apk_name.apk packed/$apk_name.apk
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem packed/$apk_name.apk
+    done
+    cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
+
+    rm -rf "$vietnamese_dir"
+    cd "$PROJECT_DIR"
+}
+
 #-----------------------------------------------------------------------------------------------------------------------------------
-function main() {
+main() {
     download_and_extract
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
-    add_vn
+    # add_vn
+    viet_hoa
     #==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
     decompile_smali "$framework"
-    # decompile_smali "$services"
-    # decompile_smali "$miui_framework"
-    # decompile_smali "$miui_services"
-
-    # python3 "${PROJECT_DIR}/fw_patcher.py"
-    google_photo
-
+    google_photo_cts
     recompile_smali "$framework"
-    # recompile_smali "$services"
-    # recompile_smali "$miui_framework"
-    # recompile_smali "$miui_services"
+    modify
     #==============================================
     # build
     repack_img_and_super
@@ -353,20 +537,10 @@ function main() {
     # zip_rom
     # set_info_release
 }
-main
-# framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
-# services="$EXTRACTED_DIR"/system/system/framework/services.jar
-# miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
-# miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
-# powerkeeper="$EXTRACTED_DIR"/system/system/app/PowerKeeper/PowerKeeper.apk
 
-# read_info
-# google_photo
-# recompile_smali "$framework"
-# decompile_smali "$framework"
-# decompile_smali "$services"
-# decompile_smali "$miui_framework"
-# decompile_smali "$miui_services"
+# main
+
+viet_hoa
 
 # python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"

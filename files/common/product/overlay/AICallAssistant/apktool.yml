@@ -1,0 +1,19 @@
+version: v2.9.0-17-44416481-SNAPSHOT
+apkFileName: AICallAssistant.apk
+isFrameworkApk: false
+usesFramework:
+  ids:
+  - 1
+  tag: null
+sdkInfo:
+packageInfo:
+  forcedPackageId: 127
+  renameManifestPackage: null
+versionInfo:
+  versionCode: 240617
+  versionName: 17.06.2024
+resourcesAreCompressed: false
+sharedLibrary: false
+sparseResources: false
+doNotCompress:
+- resources.arsc

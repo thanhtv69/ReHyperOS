@@ -1,0 +1,7 @@
+buoc 1: them smali vào 
+/system/framework/framework.jar
+bước 2 them prop vào build.prop
+/system/build.prop
+bước3 cust_prop_white_keys_list
+/system_ext/etc/cust_prop_white_keys_list
+bước 4 thêm apk vào system/app or product/app
