@@ -16,7 +16,7 @@ FILES_DIR=$PROJECT_DIR/files
 IMAGES_DIR=$OUT_DIR/images
 EXTRACTED_DIR=$OUT_DIR/extracted
 READY_DIR=$OUT_DIR/ready_flash
-APKTOOL_COMMAND="$BIN_DIR/apktool/apktool"
+APKTOOL_COMMAND="java -jar $BIN_DIR/apktool/apktool.jar"
 APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner.jar"
 BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
 SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
@@ -293,19 +293,10 @@ modify() {
 framework_patcher() {
     cd $OUT_DIR
     local repo_dir="FrameworkPatcher"
-    local repo_url="https://github.com/Jefino9488/FrameworkPatcher.git"
+    local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
 
-    if [ ! -d "$repo_dir" ]; then
-        git clone --depth=1 "$repo_url" "$repo_dir" &>/dev/null && echo "Clone thành công." || echo "Clone thất bại."
-    else
-        cd "$repo_dir" || {
-            echo "Không thể chuyển vào thư mục."
-            return 1
-        }
-        git fetch --all &>/dev/null
-        git reset --hard origin/main &>/dev/null
-        git pull &>/dev/null && echo "Cập nhật thành công." || echo "Cập nhật thất bại."
-    fi
+    curl --progress-bar --location --remote-name "$url" >/dev/null 2>&1
+    7za x master.zip -aoa >/dev/null 2>&1
 
     mv -rf "$OUT_DIR/tmp/framework/classes" "$repo_dir/classes"
     mv -rf "$OUT_DIR/tmp/framework/classes2" "$repo_dir/classes2"
@@ -405,6 +396,53 @@ recompile_smali() {
     fi
 }
 
+generate_public_xml() {
+    local input_dir=$1
+    local output_file=$2
+
+    # Kiểm tra xem thư mục đầu vào có tồn tại không
+    if [ ! -d "$input_dir" ]; then
+        echo "Thư mục đầu vào không tồn tại."
+        return 1
+    fi
+
+    # Bắt đầu tạo file public.xml
+    echo '<?xml version="1.0" encoding="utf-8"?>' > "$output_file"
+    echo '<resources>' >> "$output_file"
+
+    # Duyệt qua tất cả các file XML trong thư mục
+    for file in "$input_dir"/*.xml; do
+        # Lấy tên file mà không có phần mở rộng
+        local basename=$(basename "$file" .xml)
+        
+        # Xác định loại tài nguyên dựa trên tên file
+        local type=""
+        if [[ $basename == *"strings"* ]]; then
+            type="string"
+        elif [[ $basename == *"arrays"* ]]; then
+            type="array"
+        elif [[ $basename == *"plurals"* ]]; then
+            type="plurals"
+        else
+            continue  # Nếu không khớp với bất kỳ loại nào, bỏ qua file này
+        fi
+        
+        # Trích xuất tên tài nguyên và thêm vào public.xml
+        grep -oP '(?<=name=")[^"]+' "$file" | while read -r name; do
+            echo "    <public type=\"$type\" name=\"$name\" />" >> "$output_file"
+        done
+    done
+
+    # Kết thúc file public.xml
+    echo '</resources>' >> "$output_file"
+
+    echo "Tạo $output_file hoàn thành!"
+}
+
+# Ví dụ cách sử dụng hàm:
+# generate_public_xml "/path/to/xml/files" "public.xml"
+
+
 viet_hoa() {
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
     local vietnamese_dir="$OUT_DIR/vietnamese"
@@ -413,7 +451,7 @@ viet_hoa() {
     mkdir -p "$vietnamese_dir/packed"
     cd "$vietnamese_dir"
 
-    # Tải file ZIP từ URL và lưu với tên đã chỉ định
+    Tải file ZIP từ URL và lưu với tên đã chỉ định
     curl --progress-bar --location --remote-name "$url" >/dev/null 2>&1
     7za x master.zip -aoa >/dev/null 2>&1
 
@@ -482,34 +520,31 @@ viet_hoa() {
         package_name="${BUILD_APK_LIST[$apk_name]}"
         echo "Tên APK: $apk_name, Tên package: $package_name"
         rm -rf "$vietnamese_dir/$apk_name"
-        mkdir -p "$vietnamese_dir/$apk_name/original/META-INF"
         mkdir -p "$vietnamese_dir/$apk_name/res/values"
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
         touch "$vietnamese_dir/$apk_name/apktool.yml"
-        touch "$vietnamese_dir/$apk_name/original/META-INF/CERT.RSA"
-        touch "$vietnamese_dir/$apk_name/original/META-INF/CERT.SF"
-        touch "$vietnamese_dir/$apk_name/original/META-INF/MANIFEST.MF"
+
         touch "$vietnamese_dir/$apk_name/res/values-vi/strings.xml"
-        echo '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' >$vietnamese_dir/$apk_name/res/values-vi/strings.xml
-        echo "Manifest-Version: 1.0" >$vietnamese_dir/$apk_name/original/META-INF/MANIFEST.MF
-        echo "Created-By: 1.8.0_221 (Oracle Corporation)" >>$vietnamese_dir/$apk_name/original/META-INF/MANIFEST.MF
+        echo -e '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' > $vietnamese_dir/$apk_name/res/values-vi/strings.xml
+
         AndroidManifest="$vietnamese_dir/$apk_name/AndroidManifest.xml"
         ApktoolJson="$vietnamese_dir/$apk_name/apktool.yml"
-
-        Code1="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"6.0-$SHORT_DATE\"\n    package=\"overlay.$package_name\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
+        Code1="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"6.0-$SHORT_DATE\"\n    package=\"overlay.com.miui.mediaeditor\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
         Code2="version: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
         echo -e $Code1 >"$AndroidManifest"
         echo -e $Code2 >"$ApktoolJson"
 
         cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
+        generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o tmp/$apk_name.apk >/dev/null 2>&1
-        zipalign -f 4 tmp/$apk_name.apk packed/$apk_name.apk
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o tmp/${apk_name}_tmp.apk
+        zipalign -f 4 tmp/${apk_name}_tmp.apk packed/${apk_name}.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem packed/$apk_name.apk
+        # break
     done
     cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
 
-    rm -rf "$vietnamese_dir"
+    # rm -rf "$vietnamese_dir"
     cd "$PROJECT_DIR"
 }
 
@@ -538,9 +573,10 @@ main() {
     # set_info_release
 }
 
-# main
+main
+# framework_patcher
+# viet_hoa
 
-viet_hoa
 
 # python3 "${PROJECT_DIR}/fw_patcher.py"
 # echo "rom_path=$rom_path" >>"$GITHUB_ENV"
