@@ -236,7 +236,7 @@ zip_rom() {
     cd $PROJECT_DIR
     md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
     rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"
-    rom_path="$PROJECT_DIR/$rom_name"
+    rom_path="$READY_DIR/$rom_name"
     mv "$READY_DIR/miui.zip" "$rom_path"
 
     echo "rom_path=$rom_path" >>"$GITHUB_ENV"
