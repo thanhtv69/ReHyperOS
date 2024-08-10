@@ -29,7 +29,7 @@ jobs:
           sudo bash setup.sh
       - name: Build
         run: |
-          sudo bash buld.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}"
+          sudo bash build.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}"
       - name: Upload ROM
         run: |
           User="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
