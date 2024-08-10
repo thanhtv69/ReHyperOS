@@ -38,6 +38,8 @@ build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
 download_and_extract() {
+    echo ""
+    echo "========================================="
     if [ ! -f "$zip_name" ]; then
         echo "Đang tải xuống... [$zip_name]"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
@@ -109,6 +111,8 @@ read_info() {
 }
 
 repack_img_and_super() {
+    echo ""
+    echo "========================================="
     # Kiểm tra và tạo thư mục READY_DIR nếu cần
     if [ ! -d "$READY_DIR/images" ]; then
         echo "Đang tạo thư mục $READY_DIR/images..."
@@ -179,6 +183,8 @@ repack_img_and_super() {
 }
 
 genrate_script() {
+    echo ""
+    echo "========================================="
     echo "Tạo script để flash"
     for img_file in "$IMAGES_DIR"/*.img; do
         partition_name=$(basename "$img_file" .img)
@@ -193,6 +199,8 @@ genrate_script() {
 }
 
 zip_rom() {
+    echo ""
+    echo "========================================="
     echo "Nén super.img"
     super_img=$READY_DIR/images/super.img
     super_zst=$READY_DIR/images/super.img.zst
@@ -218,6 +226,8 @@ zip_rom() {
 }
 
 remove_bloatware() {
+    echo ""
+    echo "========================================="
     echo "- Remove bloatware" >>"$LOG_FILE"
     echo "Remove bloatware packages"
     tr -d '\r' <"$PROJECT_DIR/bloatware" | tr -s '\n' | while IFS= read -r pkg; do
@@ -230,20 +240,22 @@ remove_bloatware() {
             elif [[ -f "$path" ]]; then
                 echo "Removing file $path"
                 rm -f "$path"
-            else
-                echo "Path $path does not exist."
             fi
         fi
     done
 }
 
 add_google() {
+    echo ""
+    echo "========================================="
     echo "- Add Google Play Store, Gboard" >>"$LOG_FILE"
     echo "Add Google Play Store, Gboard"
     cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
 }
 
 disable_avb_and_dm_verity() {
+    echo ""
+    echo "========================================="
     echo "- Disable AVB and dm-verity" >>"$LOG_FILE"
     echo 'Đang vô hiệu hóa xác minh AVB và mã hóa dữ liệu'
     # find "$EXTRACTED_DIR/" -type f -name 'fstab.*' | while read -r file; do
@@ -263,6 +275,8 @@ disable_avb_and_dm_verity() {
 }
 
 google_photo_cts() {
+    echo ""
+    echo "========================================="
     echo "- Mod google photos unlimited, bypass CTS, spoofing Device" >>"$LOG_FILE"
     echo "Modding google photos"
 
@@ -295,6 +309,8 @@ google_photo_cts() {
 }
 
 modify() {
+    echo ""
+    echo "========================================="
     echo "Modifying features"
     sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/system_ext/etc/build.prop"
     sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/product/etc/build.prop"
@@ -306,6 +322,8 @@ modify() {
 }
 
 framework_patcher() {
+    echo ""
+    echo "========================================="
     echo "- Framework patcher by Jefino9488" >>"$LOG_FILE"
     cd $OUT_DIR
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
@@ -411,7 +429,7 @@ recompile_smali() {
     for dir in "$tmp/$foldername"/*/; do
         if [[ -d "$dir" ]]; then
             local dir_name=$(basename "$dir")
-            ${SMALI_COMMAND} a --api ${sdk_version} $tmp/$foldername/${dir_name} -o $tmp/$foldername/${dir_name}.dex # >/dev/null 2>&1 || echo "ERROR Smaling failed"
+            ${SMALI_COMMAND} a --api ${sdk_version} $tmp/$foldername/${dir_name} -o $tmp/$foldername/${dir_name}.dex >/dev/null 2>&1 || echo "ERROR Smaling failed"
             pushd $tmp/$foldername/ >/dev/null || exit
             7za a -y -mx0 -tzip $targetfilename ${dir_name}.dex >/dev/null 2>&1 || echo "Failed to modify $targetfilename"
             popd >/dev/null || exit
@@ -485,6 +503,8 @@ generate_public_xml() {
 # generate_public_xml "/path/to/xml/files" "public.xml"
 
 viet_hoa() {
+    echo ""
+    echo "========================================="
     echo "- Thêm Tiếng Việt + Âm Lịch" >>"$LOG_FILE"
     echo "Thêm Tiếng Việt + âm lịch"
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
