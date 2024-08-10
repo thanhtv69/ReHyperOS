@@ -141,7 +141,6 @@ viet_hoa() {
 
     # echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
     sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
-    exit
     local ALL_DATE=$(date +%Y.%m.%d)
     local SHORT_DATE=$(date +%y%m%d)
 
