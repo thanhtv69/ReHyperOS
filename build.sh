@@ -207,13 +207,18 @@ genrate_script() {
 zip_rom() {
     echo ""
     echo "========================================="
+    start_time=$(date +%s)
     echo "Nén super.img"
     super_img=$READY_DIR/images/super.img
     super_zst=$READY_DIR/images/super.img.zst
 
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -19 -f "$super_img" -o "$super_zst" --rm
+    
+    end_time=$(date +%s)
+    echo "Nén super.img trong $((end_time - start_time)) seconds"
 
+    start_time=$(date +%s)
     cp -rf $LOG_FILE $READY_DIR
     echo "Zip rom..."
     cd $READY_DIR
@@ -229,6 +234,9 @@ zip_rom() {
     echo "rom_name=$rom_name" >>"$GITHUB_ENV"
     echo "os_version=$os_version" >>"$GITHUB_ENV"
     echo "device_name=$device" >>"$GITHUB_ENV"
+
+    end_time=$(date +%s)
+    echo "Zip rom trong $((end_time - start_time)) seconds"
 }
 
 remove_bloatware() {
@@ -241,10 +249,10 @@ remove_bloatware() {
         if [[ -n "$pkg" && "$pkg" != \#* ]]; then
             path="$EXTRACTED_DIR/$pkg"
             if [[ -d "$path" ]]; then
-                echo "Removing directory $path"
+                # echo "Removing directory $path"
                 rm -rf "$path"
             elif [[ -f "$path" ]]; then
-                echo "Removing file $path"
+                # echo "Removing file $path"
                 rm -f "$path"
             fi
         fi
@@ -285,6 +293,7 @@ google_photo_cts() {
     echo "========================================="
     echo "- Mod google photos unlimited, bypass CTS, spoofing Device" >>"$LOG_FILE"
     echo "Modding google photos"
+    start_time=$(date +%s)
 
     # TODO switch snap and mtk
     7za x "$FILES_DIR/gg_cts/mtk.zip" "android/app" -o"$OUT_DIR/tmp/framework/classes" -aoa >/dev/null 2>&1
@@ -311,7 +320,9 @@ google_photo_cts() {
     cp -f "$FILES_DIR/gg_cts/SoraOS.apk" "$EXTRACTED_DIR/product/app/SoraOS/SoraOS.apk"
 
     sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
-    echo "Done modding google photos"
+
+    end_time=$(date +%s)
+    echo "Done modding google photos in $((end_time - start_time))s"
 }
 
 modify() {
@@ -330,7 +341,7 @@ modify() {
 framework_patcher() {
     echo ""
     echo "========================================="
-    start=$(date +%s)
+    start_time=$(date +%s)
     echo "- Framework patcher by Jefino9488" >>"$LOG_FILE"
     cd $OUT_DIR
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
@@ -392,8 +403,8 @@ framework_patcher() {
 
     cd $PROJECT_DIR
     rm -rf $framework_patcher
-    end=$(date +%s)
-    echo "Framework patching done in $((end - start))s"
+    end_time=$(date +%s)
+    echo "Framework patching xong trong $(($end_time - $start_time)) giây"
 }
 
 decompile_smali() {
@@ -513,6 +524,7 @@ generate_public_xml() {
 viet_hoa() {
     echo ""
     echo "========================================="
+    start_time=$(date +%s)
     echo "- Thêm Tiếng Việt + Âm Lịch" >>"$LOG_FILE"
     echo "Thêm Tiếng Việt + âm lịch"
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
@@ -633,13 +645,14 @@ viet_hoa() {
 
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
+        rm -rf $vietnamese_dir/${apk_name}_tmp.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
 
         # Kiểm tra xem tệp APK có tồn tại trong thư mục packed không
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
             # Nếu tệp tồn tại, thông báo rằng overlay đã được tạo thành công
             echo "Đã tạo overlay $apk_name.apk thành công"
-            rm -rf "$vietnamese_dir/$apk_name.apk"
+            rm -rf "$vietnamese_dir/$apk_name"
         else
             # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
             echo "Tạo overlay $apk_name.apk thất bại"
@@ -651,6 +664,9 @@ viet_hoa() {
 
     rm -rf "$vietnamese_dir"
     cd "$PROJECT_DIR"
+
+    end_time=$(date +%s)
+    echo "Đã tạo overlay Tiếng Việt trong $(($end_time - $start_time)) giây"
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------
