@@ -601,7 +601,7 @@ viet_hoa() {
 
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
-        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
 
         # Kiểm tra xem tệp APK có tồn tại trong thư mục packed không
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
