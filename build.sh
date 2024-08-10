@@ -4,7 +4,7 @@ GITHUB_ENV="$2"
 GITHUB_WORKSPACE="$3"
 
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
-# sudo chmod 777 -R ./*
+# sudo chmod 777 -R ./bin/*
 is_clean=$([ -n "$1" ] && echo true || echo false)
 # export PATH="./lib:$PATH"
 PROJECT_DIR=$(pwd)
@@ -12,6 +12,7 @@ PROJECT_DIR=$(pwd)
 BIN_DIR=$PROJECT_DIR/bin
 OUT_DIR=$PROJECT_DIR/out
 FILES_DIR=$PROJECT_DIR/files
+LOG_FILE=$OUT_DIR/build.log
 
 IMAGES_DIR=$OUT_DIR/images
 EXTRACTED_DIR=$OUT_DIR/extracted
@@ -40,6 +41,7 @@ download_and_extract() {
     if [ ! -f "$zip_name" ]; then
         echo "Đang tải xuống... [$zip_name]"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
+        echo "- Build from $URL" >>"$LOG_FILE"
     fi
 
     echo "Đang giải nén... [payload.bin]"
@@ -92,9 +94,11 @@ read_info() {
 
     # Đọc thông tin sdk_version
     sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
+    echo "- SDK Version: $sdk_version"
 
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
+    echo "- Device: $device"
 
     echo "======================="
     echo "Thông tin hệ thống:"
@@ -195,16 +199,26 @@ zip_rom() {
 
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -19 -f "$super_img" -o "$super_zst" --rm
+
+    mv $LOG_FILE $READY_DIR
     echo "Zip rom..."
     cd $READY_DIR
-    7za -tzip a miui.zip bin/* images/* FlashROM.bat -y -mx9
+    log_file_name=$(basename $LOG_FILE)
+    7za -tzip a miui.zip bin/* images/* FlashROM.bat $log_file_name -y -mx9
     cd $PROJECT_DIR
     md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
     rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"
-    mv "$READY_DIR/miui.zip" "$READY_DIR/$rom_name"
+    rom_path="$PROJECT_DIR/$rom_name"
+    mv "$READY_DIR/miui.zip" "$rom_path"
+
+    echo "rom_path=$rom_path" >>"$GITHUB_ENV"
+    echo "rom_name=$rom_name" >>"$GITHUB_ENV"
+    echo "os_version=$os_version" >>"$GITHUB_ENV"
+    echo "device_name=$device" >>"$GITHUB_ENV"
 }
 
 remove_bloatware() {
+    echo "- Remove bloatware" >>"$LOG_FILE"
     echo "Remove bloatware packages"
     tr -d '\r' <"$PROJECT_DIR/bloatware" | tr -s '\n' | while IFS= read -r pkg; do
         pkg=$(echo "$pkg" | xargs) # Loại bỏ khoảng trắng thừa
@@ -224,11 +238,13 @@ remove_bloatware() {
 }
 
 add_google() {
-    echo "Add VietNameses"
+    echo "- Add Google Play Store, Gboard" >>"$LOG_FILE"
+    echo "Add Google Play Store, Gboard"
     cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
 }
 
 disable_avb_and_dm_verity() {
+    echo "- Disable AVB and dm-verity" >>"$LOG_FILE"
     echo 'Đang vô hiệu hóa xác minh AVB và mã hóa dữ liệu'
     # find "$EXTRACTED_DIR/" -type f -name 'fstab.*' | while read -r file; do
     find "$EXTRACTED_DIR/" -path "*/etc/*" -type f -name 'fstab.*' | while read -r file; do
@@ -247,6 +263,7 @@ disable_avb_and_dm_verity() {
 }
 
 google_photo_cts() {
+    echo "- Mod google photos unlimited, bypass CTS, spoofing Device" >>"$LOG_FILE"
     echo "Modding google photos"
 
     # TODO switch snap and mtk
@@ -289,42 +306,68 @@ modify() {
 }
 
 framework_patcher() {
+    echo "- Framework patcher by Jefino9488" >>"$LOG_FILE"
     cd $OUT_DIR
-    local repo_dir="FrameworkPatcher"
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
+    local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
 
-    curl --progress-bar --location --remote-name "$url" >/dev/null 2>&1
-    7za x master.zip -aoa >/dev/null 2>&1
+    curl -s --L --remote-name "$url"
+    7za x master.zip -aoa
+    rm -rf master.zip
 
-    mv -rf "$OUT_DIR/tmp/framework/classes" "$repo_dir/classes"
-    mv -rf "$OUT_DIR/tmp/framework/classes2" "$repo_dir/classes2"
-    mv -rf "$OUT_DIR/tmp/framework/classes3" "$repo_dir/classes3"
-    mv -rf "$OUT_DIR/tmp/framework/classes4" "$repo_dir/classes4"
-    mv -rf "$OUT_DIR/tmp/framework/classes5" "$repo_dir/classes5"
-    mv -rf "$OUT_DIR/tmp/services/classes" "$repo_dir/services_classes"
-    mv -rf "$OUT_DIR/tmp/services/classes2" "$repo_dir/services_classes2"
-    mv -rf "$OUT_DIR/tmp/services/classes3" "$repo_dir/services_classes3"
-    mv -rf "$OUT_DIR/tmp/miui-framework/classes" "$repo_dir/miui_framework_classes"
-    mv -rf "$OUT_DIR/tmp/miui-services/classes" "$repo_dir/miui_services_classes"
+    echo "Moving framework/classes to classes..."
+    mv -rf "$OUT_DIR/tmp/framework/classes" "$framework_patcher/classes"
+    echo "Moving framework/classes2 to classes2..."
+    mv -rf "$OUT_DIR/tmp/framework/classes2" "$framework_patcher/classes2"
+    echo "Moving framework/classes3 to classes3..."
+    mv -rf "$OUT_DIR/tmp/framework/classes3" "$framework_patcher/classes3"
+    echo "Moving framework/classes4 to classes4..."
+    mv -rf "$OUT_DIR/tmp/framework/classes4" "$framework_patcher/classes4"
+    echo "Moving framework/classes5 to classes5..."
+    mv -rf "$OUT_DIR/tmp/framework/classes5" "$framework_patcher/classes5"
+    echo "Moving services/classes to services_classes..."
+    mv -rf "$OUT_DIR/tmp/services/classes" "$framework_patcher/services_classes"
+    echo "Moving services/classes2 to services_classes2..."
+    mv -rf "$OUT_DIR/tmp/services/classes2" "$framework_patcher/services_classes2"
+    echo "Moving services/classes3 to services_classes3..."
+    mv -rf "$OUT_DIR/tmp/services/classes3" "$framework_patcher/services_classes3"
+    echo "Moving miui-framework/classes to miui_framework_classes..."
+    mv -rf "$OUT_DIR/tmp/miui-framework/classes" "$framework_patcher/miui_framework_classes"
+    echo "Moving miui-services/classes to miui_services_classes..."
+    mv -rf "$OUT_DIR/tmp/miui-services/classes" "$framework_patcher/miui_services_classes"
 
+    cd $framework_patcher
     python3 "framework_patch.py"
     python3 "miui-service_Patch.py"
     python3 "miui-framework_patch.py"
     python3 "miui-service_Patch.py"
 
-    cp -rf "$repo_dir/magisk_module/system" $EXTRACTED_DIR
+    cp -rf "$framework_patcher/magisk_module/system/." $EXTRACTED_DIR
 
-    mv -rf "$repo_dir/classes" "$OUT_DIR/tmp/framework/classes"
-    mv -rf "$repo_dir/classes2" "$OUT_DIR/tmp/framework/classes2"
-    mv -rf "$repo_dir/classes3" "$OUT_DIR/tmp/framework/classes3"
-    mv -rf "$repo_dir/classes4" "$OUT_DIR/tmp/framework/classes4"
-    mv -rf "$repo_dir/classes5" "$OUT_DIR/tmp/framework/classes5"
-    mv -rf "$repo_dir/services_classes" "$OUT_DIR/tmp/services/classes"
-    mv -rf "$repo_dir/services_classes2" "$OUT_DIR/tmp/services/classes2"
-    mv -rf "$repo_dir/services_classes3" "$OUT_DIR/tmp/services/classes3"
-    mv -rf "$repo_dir/miui_framework_classes" "$OUT_DIR/tmp/miui-framework/classes"
-    mv -rf "$repo_dir/miui_services_classes" "$OUT_DIR/tmp/miui-services/classes"
+    echo "Moving classes to framework..."
+    mv -rf "$framework_patcher/classes" "$OUT_DIR/tmp/framework/classes"
+    echo "Moving classes2 to framework..."
+    mv -rf "$framework_patcher/classes2" "$OUT_DIR/tmp/framework/classes2"
+    echo "Moving classes3 to framework..."
+    mv -rf "$framework_patcher/classes3" "$OUT_DIR/tmp/framework/classes3"
+    echo "Moving classes4 to framework..."
+    mv -rf "$framework_patcher/classes4" "$OUT_DIR/tmp/framework/classes4"
+    echo "Moving classes5 to framework..."
+    mv -rf "$framework_patcher/classes5" "$OUT_DIR/tmp/framework/classes5"
+    echo "Moving services_classes to services..."
+    mv -rf "$framework_patcher/services_classes" "$OUT_DIR/tmp/services/classes"
+    echo "Moving services_classes2 to services..."
+    mv -rf "$framework_patcher/services_classes2" "$OUT_DIR/tmp/services/classes2"
+    echo "Moving services_classes3 to services..."
+    mv -rf "$framework_patcher/services_classes3" "$OUT_DIR/tmp/services/classes3"
+    echo "Moving miui_framework_classes to miui-framework..."
+    mv -rf "$framework_patcher/miui_framework_classes" "$OUT_DIR/tmp/miui-framework/classes"
+    echo "Moving miui_services_classes to miui-services..."
+    mv -rf "$framework_patcher/miui_services_classes" "$OUT_DIR/tmp/miui-services/classes"
+
     cd $PROJECT_DIR
+    rm -rf $framework_patcher
+    echo "Framework patching done"
 }
 
 decompile_smali() {
@@ -411,47 +454,72 @@ generate_public_xml() {
     # Duyệt qua tất cả các file XML trong thư mục
     for file in "$input_dir"/*.xml; do
         # Lấy tên file mà không có phần mở rộng
-        local base_name=$(basename "$file" .xml)
+        local basename=$(basename "$file" .xml)
 
         # Xác định loại tài nguyên dựa trên tên file
         local type=""
-        case "$base_name" in
-        *"strings"*) type="string" ;;
-        *"arrays"*) type="array" ;;
-        *"plurals"*) type="plurals" ;;
-        *"dimen"*) type="dimen" ;;
-        *"colors"*) type="color" ;;
-        *"styles"*) type="style" ;;
-        *"attrs"*) type="attr" ;;
-        *"integers"*) type="integer" ;;
-        *"bools"*) type="bool" ;;
-        *)
+        if [[ $basename == *"strings"* ]]; then
+            type="string"
+        elif [[ $basename == *"arrays"* ]]; then
+            type="array"
+        elif [[ $basename == *"plurals"* ]]; then
+            type="plurals"
+        else
             continue # Nếu không khớp với bất kỳ loại nào, bỏ qua file này
-            ;;
-        esac
+        fi
 
-        # Sử dụng grep để trích xuất các phần tử với thuộc tính name
-        grep -oP '<item[^>]*name="\K[^"]+' "$file" | while IFS= read -r name; do
-            # Ghi vào file public.xml
+        # Trích xuất tên tài nguyên và thêm vào public.xml
+        grep -oP '(?<=name=")[^"]+' "$file" | while read -r name; do
             echo "    <public type=\"$type\" name=\"$name\" />" >>"$output_file"
         done
     done
 
     # Kết thúc file public.xml
     echo '</resources>' >>"$output_file"
+
+    echo "Tạo $output_file hoàn thành!"
 }
 
+# Ví dụ cách sử dụng hàm:
+# generate_public_xml "/path/to/xml/files" "public.xml"
+
 viet_hoa() {
+    echo "- Thêm Tiếng Việt + Âm Lịch" >>"$LOG_FILE"
+    echo "Thêm Tiếng Việt + âm lịch"
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
     local vietnamese_dir="$OUT_DIR/vietnamese"
     local vietnamese_master="$vietnamese_dir/MIUI-14-XML-Vietnamese-master/Vietnamese/main"
 
-    mkdir -p "$vietnamese_dir/packed"
+    rm -rf "$vietnamese_dir/packed" >/dev/null 2>&1
+    mkdir -p "$vietnamese_dir/packed/"
     cd "$vietnamese_dir"
 
-    Tải file ZIP từ URL và lưu với tên đã chỉ định
-    curl --progress-bar --location --remote-name "$url" >/dev/null 2>&1
+    # Tải file ZIP từ URL và lưu với tên đã chỉ định
+    curl -s --L --remote-name "$url" >/dev/null 2>&1
     7za x master.zip -aoa >/dev/null 2>&1
+    rm -f master.zip
+
+    echo "Xoá bản quyền"
+    sed -i 's/๖ۣۜßεℓ/Community/g' $vietnamese_master/*/res/values-vi/strings.xml
+    sed -i 's/MIUI.VN/Open Source/g' $vietnamese_master/*/res/values-vi/strings.xml
+
+    echo "Thêm âm lịch"
+    sed -i \
+        -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+        -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+        -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
+        -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
+        $vietnamese_master/*/res/values-vi/strings.xml
+
+    echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
+    sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $vietnamese_master/*/res/values-vi/strings.xml
+
+    echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
+    sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $vietnamese_master/*/res/values-vi/strings.xml
 
     declare -A BUILD_APK_LIST=(
         ["AuthManager"]="com.lbe.security.miui"
@@ -511,41 +579,40 @@ viet_hoa() {
         ["Traceur"]="com.android.traceur"
     )
 
-    ALL_DATE=$(date +%Y.%m.%d)
-    SHORT_DATE=$(date +%y%m%d)
+    local ALL_DATE=$(date +%Y.%m.%d)
+    local SHORT_DATE=$(date +%y%m%d)
 
-    rm -rf "$vietnamese_dir/packed" >/dev/null 2>&1
     for apk_name in "${!BUILD_APK_LIST[@]}"; do
-        package_name="${BUILD_APK_LIST[$apk_name]}"
+        local package_name="${BUILD_APK_LIST[$apk_name]}"
         echo "Tên APK: $apk_name, Tên package: $package_name"
         rm -rf "$vietnamese_dir/$apk_name"
         mkdir -p "$vietnamese_dir/$apk_name/res/values"
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
-        touch "$vietnamese_dir/$apk_name/res/values-vi/strings.xml"
-        echo -e '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' >$vietnamese_dir/$apk_name/res/values-vi/strings.xml
-
-        AndroidManifest="$vietnamese_dir/$apk_name/AndroidManifest.xml"
-        ApktoolJson="$vietnamese_dir/$apk_name/apktool.yml"
-        Code1="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"6.0-$SHORT_DATE\"\n    package=\"overlay.com.miui.mediaeditor\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
-        Code2="version: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
-        echo -e $Code1 >"$AndroidManifest"
-        echo -e $Code2 >"$ApktoolJson"
+        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"6.0-$SHORT_DATE\"\n    package=\"overlay.com.miui.mediaeditor\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
+        local apktool_content="version: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
+        echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
+        echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
         cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
+
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o tmp/${apk_name}_tmp.apk >/dev/null 2>&1
-        zipalign -f 4 tmp/${apk_name}_tmp.apk packed/${apk_name}.apk >/dev/null 2>&1
-        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem packed/$apk_name.apk >/dev/null 2>&1
-        rm -rf tmp
-        if [ -f "packed/$apk_name.apk" ]; then
-            echo "Đã tạo overlay $apk_name.apk thành công"
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk
+        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/key/testkey.pk8 --cert $BIN_DIR/apktool/key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
+
+        # Kiểm tra xem tệp APK có tồn tại trong thư mục packed không
+        if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
+            # Nếu tệp tồn tại, thông báo rằng overlay đã được tạo thành công
+            echo "Đã tạo overlay $apk_name.apk thành công"
         else
-            echo "Tạo overlay $apk_name.apk thất bại"
+            # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
+            echo "Tạo overlay $apk_name.apk thất bại"
             exit 1
         fi
+
     done
     cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
 
@@ -555,6 +622,9 @@ viet_hoa() {
 
 #-----------------------------------------------------------------------------------------------------------------------------------
 main() {
+    # tạo file log
+    rm -f "$LOG_FILE" >/dev/null 2>&1
+    touch "$LOG_FILE"
     download_and_extract
     read_info
     disable_avb_and_dm_verity
@@ -566,25 +636,24 @@ main() {
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
+
     decompile_smali "$framework"
+    decompile_smali "$services"
+    decompile_smali "$miui_framework"
+    decompile_smali "$miui_services"
+
+    framework_patcher
     google_photo_cts
+
     recompile_smali "$framework"
+    recompile_smali "$services"
+    recompile_smali "$miui_framework"
+    recompile_smali "$miui_services"
+
     modify
     #==============================================
-    # build
     repack_img_and_super
     genrate_script
     zip_rom
-    # set_info_release
 }
-
 main
-# framework_patcher
-# viet_hoa
-
-# python3 "${PROJECT_DIR}/fw_patcher.py"
-# echo "rom_path=$rom_path" >>"$GITHUB_ENV"
-# echo "rom_name=$rom_name" >>"$GITHUB_ENV"
-# echo "os_version=$os_version" >>"$GITHUB_ENV"
-# echo "device_name=$device" >>"$GITHUB_ENV"
-# echo "rom_md5=$md5" >>"$GITHUB_ENV"
