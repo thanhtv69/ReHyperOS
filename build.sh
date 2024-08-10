@@ -430,7 +430,7 @@ decompile_smali() {
     for dexfile in "$tmp/$foldername"/*.dex; do
         if [[ -e "$dexfile" ]]; then
             smalifname=$(basename "${dexfile%.*}")
-            ${BAKSMALI_COMMAND} d --api ${sdk_version} "$dexfile" -o "$tmp/$foldername/$smalifname" # 2>&1 || echo "ERROR Baksmaling failed"
+            $BAKSMALI_COMMAND d --api $sdk_version "$dexfile" -o "$tmp/$foldername/$smalifname" # 2>&1 || echo "ERROR Baksmaling failed"
             echo "Decompiled $smalifname completed"
         else
             echo "No .dex files found in $tmp/$foldername"
@@ -516,7 +516,7 @@ generate_public_xml() {
     # Kết thúc file public.xml
     echo '</resources>' >>"$output_file"
 
-    echo "Tạo $output_file hoàn thành!"
+    # echo "Tạo $output_file hoàn thành!"
 }
 
 # Ví dụ cách sử dụng hàm:
@@ -588,7 +588,8 @@ viet_hoa() {
         ["Telecom"]="com.android.server.telecom"
         ["MiuiAod"]="com.miui.aod"
         ["MiuiCamera"]="com.android.camera"
-        ["MiuixEditor"]="com.miui.phrase"
+        ["MiuiFrequentPhrase"]="com.miui.phrase"
+        ["MiuixEditor"]="com.miuix.editor"
         ["DownloadProvider"]="com.android.providers.downloads"
         ["DownloadProviderUi"]="com.android.providers.downloads.ui"
         ["PermissionController"]="com.android.permissioncontroller"
@@ -596,6 +597,7 @@ viet_hoa() {
         ["MiuiExtraPhoto"]="com.miui.extraphoto"
         ["Provision"]="com.android.provision"
         ["Traceur"]="com.android.traceur"
+        ["Bluetooth"]="com.android.bluetooth"
     )
 
     local ALL_DATE=$(date +%Y.%m.%d)
@@ -652,6 +654,7 @@ viet_hoa() {
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
             # Nếu tệp tồn tại, thông báo rằng overlay đã được tạo thành công
             # echo "Đã tạo overlay $apk_name.apk thành công"
+            cp -rf "$vietnamese_dir/packed/$apk_name.apk" "$FILES_DIR/common/product/overlay"
             rm -rf "$vietnamese_dir/$apk_name"
         else
             # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
@@ -676,12 +679,12 @@ main() {
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
 
-    download_and_extract
+    # download_and_extract
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
-    add_google
     viet_hoa
+    add_google
     #==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
