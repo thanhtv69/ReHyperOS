@@ -40,6 +40,7 @@ max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 download_and_extract() {
     echo ""
     echo "========================================="
+    start=$(date +%s)
     if [ ! -f "$zip_name" ]; then
         echo "Đang tải xuống... [$zip_name]"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
@@ -88,6 +89,9 @@ download_and_extract() {
         fi
         [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR/$partition.img"
     done
+    end=$(date +%s)
+    # echo phut giay
+    echo "Extracted in $((end - start)) seconds"
 }
 
 read_info() {
@@ -121,6 +125,7 @@ repack_img_and_super() {
 
     # Lặp qua danh sách các phân vùng để đóng gói lại
     for partition in "${EXTRACT_LIST[@]}"; do
+        start=$(date +%s)
         echo "Đang đóng gói lại... [$partition]"
 
         # Đặt tên các tệp đầu vào và đầu ra
@@ -142,11 +147,12 @@ repack_img_and_super() {
             echo "Quá trình đóng gói lại file [$output_image] thất bại."
             exit 1
         fi
-
-        echo "Đã đóng gói lại thành công file $partition.img"
+        end=$(date +%s)
+        echo "Mkfs erofs $partition in $((end - start)) seconds"
     done
 
     # Đóng gói các phân vùng thành super
+    start=$(date +%s)
     echo "Đóng gói các phân vùng thành [super.img]"
     super_out=$READY_DIR/images/super.img
     lpargs="-F --virtual-ab --output $super_out --metadata-size 65536 --super-name super --metadata-slots 3 --device super:$super_size --group=qti_dynamic_partitions_a:$super_size --group=qti_dynamic_partitions_b:$super_size"
@@ -171,7 +177,9 @@ repack_img_and_super() {
 
     lpmake $lpargs
     if [ -f "$super_out" ]; then
-        echo "Đóng gói thành công super.img"
+        # echo "Đóng gói thành công super.img"
+        end=$(date +%s)
+        echo "LPmake super.img in $((end - start)) seconds"
         find "$READY_DIR/images" -type f -name '*.img' | grep -E "$(
             IFS=\|
             echo "${SUPER_LIST[*]}"
@@ -183,8 +191,6 @@ repack_img_and_super() {
 }
 
 genrate_script() {
-    echo ""
-    echo "========================================="
     echo "Tạo script để flash"
     for img_file in "$IMAGES_DIR"/*.img; do
         partition_name=$(basename "$img_file" .img)
@@ -324,12 +330,13 @@ modify() {
 framework_patcher() {
     echo ""
     echo "========================================="
+    start=$(date +%s)
     echo "- Framework patcher by Jefino9488" >>"$LOG_FILE"
     cd $OUT_DIR
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
 
-    curl -s --location --remote-name "$url" >/dev/null 2>&1
+    curl -s --location --remote-name "$url"
     7za x master.zip -aoa >/dev/null 2>&1
     rm -rf master.zip
 
@@ -355,10 +362,10 @@ framework_patcher() {
     mv -f "$OUT_DIR/tmp/miui-services/classes" "$framework_patcher/miui_services_classes"
 
     cd $framework_patcher
-    python3 "framework_patch.py"
-    python3 "miui-service_Patch.py"
-    python3 "miui-framework_patch.py"
-    python3 "miui-service_Patch.py"
+    python3 "framework_patch.py" >/dev/null 2>&1
+    python3 "miui-service_Patch.py" >/dev/null 2>&1
+    python3 "miui-framework_patch.py" >/dev/null 2>&1
+    python3 "miui-service_Patch.py" >/dev/null 2>&1
 
     cp -rf "$framework_patcher/magisk_module/system/." $EXTRACTED_DIR
 
@@ -385,7 +392,8 @@ framework_patcher() {
 
     cd $PROJECT_DIR
     rm -rf $framework_patcher
-    echo "Framework patching done"
+    end=$(date +%s)
+    echo "Framework patching done in $((end - start))s"
 }
 
 decompile_smali() {
@@ -516,7 +524,7 @@ viet_hoa() {
     cd "$vietnamese_dir"
 
     # Tải file ZIP từ URL và lưu với tên đã chỉ định
-    curl -s --location --remote-name "$url" >/dev/null 2>&1
+    curl -s --location --remote-name "$url"
     7za x master.zip -aoa >/dev/null 2>&1
     rm -f master.zip
 
@@ -590,7 +598,7 @@ viet_hoa() {
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
         local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"6.0-$SHORT_DATE\"\n    package=\"overlay.com.miui.mediaeditor\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
-        local apktool_content="version: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
+        local apktool_content="!!brut.androlib.meta.MetaInfo\nversion: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
@@ -631,12 +639,13 @@ viet_hoa() {
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
             # Nếu tệp tồn tại, thông báo rằng overlay đã được tạo thành công
             echo "Đã tạo overlay $apk_name.apk thành công"
+            rm -rf "$vietnamese_dir/$apk_name.apk"
         else
             # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
             echo "Tạo overlay $apk_name.apk thất bại"
-            exit 1
+            # exit 1
         fi
-
+        # break
     done
     cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
 
@@ -651,7 +660,7 @@ main() {
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
 
-    download_and_extract
+    # download_and_extract
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
@@ -683,3 +692,4 @@ main() {
     zip_rom
 }
 main
+# viet_hoa
