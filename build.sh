@@ -643,7 +643,7 @@ viet_hoa() {
         else
             # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
             echo "Tạo overlay $apk_name.apk thất bại"
-            # exit 1
+            exit 1
         fi
         # break
     done
@@ -660,7 +660,7 @@ main() {
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
 
-    # download_and_extract
+    download_and_extract
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
