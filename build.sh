@@ -38,19 +38,22 @@ build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
 download_and_extract() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     start=$(date +%s)
+
+    # Kiểm tra xem file zip đã được tải xuống chưa
     if [ ! -f "$zip_name" ]; then
         echo "Đang tải xuống... [$zip_name]"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
-        echo "- Build from $URL" >>"$LOG_FILE"
+        echo "- Tải xuống từ $URL" >>"$LOG_FILE"
     fi
 
+    # Giải nén file payload.bin từ file zip
     echo "Đang giải nén... [payload.bin]"
     7za x "$zip_name" payload.bin -o"$OUT_DIR" -aos >/dev/null 2>&1
     [ "$is_clean" = true ] && rm -rf "$zip_name"
 
+    # Tìm các phân vùng thiếu
     echo "Đang tìm các phân vùng thiếu"
     payload_output=$(payload-dumper-go -l "$OUT_DIR/payload.bin")
     p_payload=($(echo "$payload_output" | grep -oP '\b\w+(?=\s\()'))
@@ -66,6 +69,7 @@ download_and_extract() {
         fi
     done
 
+    # Giải nén các phân vùng thiếu nếu có
     if [ ! -z "$missing_partitions" ]; then
         echo "Đang giải nén các phân vùng thiếu: [$missing_partitions]"
         payload-dumper-go -c "$max_threads" -o "$IMAGES_DIR" -p "$missing_partitions" "$OUT_DIR/payload.bin" >/dev/null 2>&1 || echo "Lỗi giải nén [payload.bin]"
@@ -75,6 +79,7 @@ download_and_extract() {
     fi
     [ "$is_clean" = true ] && rm -rf "$OUT_DIR/payload.bin"
 
+    # Giải nén từng phân vùng cụ thể trong danh sách EXTRACT_LIST
     for partition in "${EXTRACT_LIST[@]}"; do
         if [ ! -f "$IMAGES_DIR/$partition.img" ]; then
             echo "Không tìm thấy $partition.img"
@@ -89,9 +94,10 @@ download_and_extract() {
         fi
         [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR/$partition.img"
     done
+
+    # Thông báo thời gian thực hiện
     end=$(date +%s)
-    # echo phut giay
-    echo "Extracted in $((end - start)) seconds"
+    echo "Đã giải nén trong $((end - start)) giây"
 }
 
 read_info() {
@@ -115,8 +121,7 @@ read_info() {
 }
 
 repack_img_and_super() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     # Kiểm tra và tạo thư mục READY_DIR nếu cần
     if [ ! -d "$READY_DIR/images" ]; then
         echo "Đang tạo thư mục $READY_DIR/images..."
@@ -205,8 +210,7 @@ genrate_script() {
 }
 
 zip_rom() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     start_time=$(date +%s)
     echo "Nén super.img"
     super_img=$READY_DIR/images/super.img
@@ -214,7 +218,7 @@ zip_rom() {
 
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -19 -f "$super_img" -o "$super_zst" --rm
-    
+
     end_time=$(date +%s)
     echo "Nén super.img trong $((end_time - start_time)) seconds"
 
@@ -260,16 +264,14 @@ remove_bloatware() {
 }
 
 add_google() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     echo "- Add Google Play Store, Gboard" >>"$LOG_FILE"
     echo "Add Google Play Store, Gboard"
     cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
 }
 
 disable_avb_and_dm_verity() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     echo "- Disable AVB and dm-verity" >>"$LOG_FILE"
     echo 'Đang vô hiệu hóa xác minh AVB và mã hóa dữ liệu'
     # find "$EXTRACTED_DIR/" -type f -name 'fstab.*' | while read -r file; do
@@ -289,8 +291,7 @@ disable_avb_and_dm_verity() {
 }
 
 google_photo_cts() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     echo "- Mod google photos unlimited, bypass CTS, spoofing Device" >>"$LOG_FILE"
     echo "Modding google photos"
     start_time=$(date +%s)
@@ -339,10 +340,10 @@ modify() {
 }
 
 framework_patcher() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     start_time=$(date +%s)
     echo "- Framework patcher by Jefino9488" >>"$LOG_FILE"
+    echo "Modding framework"
     cd $OUT_DIR
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
@@ -373,10 +374,10 @@ framework_patcher() {
     mv -f "$OUT_DIR/tmp/miui-services/classes" "$framework_patcher/miui_services_classes"
 
     cd $framework_patcher
-    python3 "framework_patch.py" >/dev/null 2>&1
-    python3 "miui-service_Patch.py" >/dev/null 2>&1
-    python3 "miui-framework_patch.py" >/dev/null 2>&1
-    python3 "miui-service_Patch.py" >/dev/null 2>&1
+    python3 "framework_patch.py"
+    python3 "miui-service_Patch.py"
+    python3 "miui-framework_patch.py"
+    python3 "miui-service_Patch.py"
 
     cp -rf "$framework_patcher/magisk_module/system/." $EXTRACTED_DIR
 
@@ -522,8 +523,7 @@ generate_public_xml() {
 # generate_public_xml "/path/to/xml/files" "public.xml"
 
 viet_hoa() {
-    echo ""
-    echo "========================================="
+    echo -e "\n========================================="
     start_time=$(date +%s)
     echo "- Thêm Tiếng Việt + Âm Lịch" >>"$LOG_FILE"
     echo "Thêm Tiếng Việt + âm lịch"
@@ -643,15 +643,15 @@ viet_hoa() {
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk
-        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1
+        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
 
         # Kiểm tra xem tệp APK có tồn tại trong thư mục packed không
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
             # Nếu tệp tồn tại, thông báo rằng overlay đã được tạo thành công
-            echo "Đã tạo overlay $apk_name.apk thành công"
+            # echo "Đã tạo overlay $apk_name.apk thành công"
             rm -rf "$vietnamese_dir/$apk_name"
         else
             # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
