@@ -520,39 +520,6 @@ viet_hoa() {
     7za x master.zip -aoa >/dev/null 2>&1
     rm -f master.zip
 
-    find "$vietnamese_master" -mindepth 1 -maxdepth 1 -type d | while read -r folder_vi; do
-        # Lấy tên thư mục con
-        folder_name=$(basename "$folder_vi")
-        strings_file="$vietnamese_master/$folder_name/res/values-vi/strings.xml"
-
-        # Kiểm tra xem file có tồn tại không
-        if [ ! -f "$strings_file" ]; then
-            continue
-        fi
-
-        echo "Xoá bản quyền"
-        sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
-        sed -i 's/MIUI.VN/Open Source/g' $strings_file
-
-        echo "Thêm âm lịch"
-        sed -i \
-            -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
-            -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
-            -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
-            -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
-            -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
-            -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
-            -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
-            -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
-            $strings_file
-
-        echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
-        sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
-
-        echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
-        sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
-    done
-
     declare -A BUILD_APK_LIST=(
         ["AuthManager"]="com.lbe.security.miui"
         ["Calendar"]="com.android.calendar"
@@ -628,6 +595,31 @@ viet_hoa() {
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
         cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
+
+        strings_file="$vietnamese_master/$apk_name/res/values-vi/strings.xml"
+        if [ -f "$strings_file" ]; then
+            # echo "Xoá bản quyền"
+            sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
+            sed -i 's/MIUI.VN/Open Source/g' $strings_file
+
+            # echo "Thêm âm lịch"
+            sed -i \
+                -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+                -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+                -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+                -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+                -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+                -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+                -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
+                -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
+                $strings_file
+
+            # echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
+            sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
+
+            # echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
+            sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
+        fi
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
