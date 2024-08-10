@@ -4,7 +4,7 @@ GITHUB_ENV="$2"
 GITHUB_WORKSPACE="$3"
 
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
-# sudo chmod 777 -R ./bin/*
+sudo chmod 777 -R ./bin/*
 is_clean=$([ -n "$1" ] && echo true || echo false)
 # export PATH="./lib:$PATH"
 PROJECT_DIR=$(pwd)
