@@ -67,38 +67,57 @@ framework_patcher() {
     echo "Framework patching xong trong $(($end_time - $start_time)) giây"
 }
 
+# google_photo_cts() {
+#     echo -e "\n========================================="
+#     echo "- Mod google photos unlimited, bypass CTS, spoofing Device" >>"$LOG_FILE"
+#     echo "Modding google photos"
+#     start_time=$(date +%s)
+
+#     # TODO switch snap and mtk
+#     7za x "$FILES_DIR/gg_cts/mtk.zip" "android/app" -o"$OUT_DIR/tmp/framework/classes" -aoa >/dev/null 2>&1
+#     7za x "$FILES_DIR/gg_cts/mtk.zip" "android/security" -o"$OUT_DIR/tmp/framework/classes3" -aoa >/dev/null 2>&1
+#     7za x "$FILES_DIR/gg_cts/mtk.zip" "com" -o"$OUT_DIR/tmp/framework/classes5" -aoa >/dev/null 2>&1
+
+#     local build_prop_org="$EXTRACTED_DIR/system/system/build.prop"
+#     local build_prop_mod="$FILES_DIR/gg_cts/build.prop"
+#     while IFS= read -r line; do
+#         if ! grep -Fxq "$line" "$build_prop_org"; then
+#             sed -i "/# end of file/i $line" "$build_prop_org"
+#         fi
+#     done <$build_prop_mod
+
+#     local white_key_org="$EXTRACTED_DIR/system_ext/etc/cust_prop_white_keys_list"
+#     local white_key_mod="$FILES_DIR/gg_cts/cust_prop_white_keys_list"
+#     while IFS= read -r line; do
+#         if ! grep -Fxq "$line" "$white_key_org"; then
+#             printf "\n%s" "$line" >>"$white_key_org"
+#         fi
+#     done <$white_key_mod
+
+#     mkdir -p "$EXTRACTED_DIR/product/app/SoraOS"
+#     cp -f "$FILES_DIR/gg_cts/SoraOS.apk" "$EXTRACTED_DIR/product/app/SoraOS/SoraOS.apk"
+
+#     sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
+
+#     end_time=$(date +%s)
+#     echo "Done modding google photos in $((end_time - start_time))s"
+# }
+
 google_photo_cts() {
     echo -e "\n========================================="
-    echo "- Mod google photos unlimited, bypass CTS, spoofing Device" >>"$LOG_FILE"
+    echo "- Google photos Unlimited" >>"$LOG_FILE"
     echo "Modding google photos"
-    start_time=$(date +%s)
-
-    # TODO switch snap and mtk
-    7za x "$FILES_DIR/gg_cts/mtk.zip" "android/app" -o"$OUT_DIR/tmp/framework/classes" -aoa >/dev/null 2>&1
-    7za x "$FILES_DIR/gg_cts/mtk.zip" "android/security" -o"$OUT_DIR/tmp/framework/classes3" -aoa >/dev/null 2>&1
-    7za x "$FILES_DIR/gg_cts/mtk.zip" "com" -o"$OUT_DIR/tmp/framework/classes5" -aoa >/dev/null 2>&1
-
-    local build_prop_org="$EXTRACTED_DIR/system/system/build.prop"
-    local build_prop_mod="$FILES_DIR/gg_cts/build.prop"
-    while IFS= read -r line; do
-        if ! grep -Fxq "$line" "$build_prop_org"; then
-            sed -i "/# end of file/i $line" "$build_prop_org"
-        fi
-    done <$build_prop_mod
-
-    local white_key_org="$EXTRACTED_DIR/system_ext/etc/cust_prop_white_keys_list"
-    local white_key_mod="$FILES_DIR/gg_cts/cust_prop_white_keys_list"
-    while IFS= read -r line; do
-        if ! grep -Fxq "$line" "$white_key_org"; then
-            printf "\n%s" "$line" >>"$white_key_org"
-        fi
-    done <$white_key_mod
-
-    mkdir -p "$EXTRACTED_DIR/product/app/SoraOS"
-    cp -f "$FILES_DIR/gg_cts/SoraOS.apk" "$EXTRACTED_DIR/product/app/SoraOS/SoraOS.apk"
+    python3 "${FILES_DIR}/gg_cts/update_device.py"
+    local target_folder="${OUT_DIR}/tmp/framework"
+    local application_smali="$target_folder/classes/android/app/Application.smali"
+    local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
+    sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
+    sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' $application_smali
+    
+    cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
+    cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
 
     sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
 
-    end_time=$(date +%s)
-    echo "Done modding google photos in $((end_time - start_time))s"
+    echo "Done modding google photos"
 }
