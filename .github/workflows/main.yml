@@ -3,64 +3,42 @@ on:
   workflow_dispatch:
     inputs:
       URL:
-        description: "待操作的底包/xiaomi.eu底包下载地址"
+        description: "Official ROM URL"
         required: true
-        default: 'https://008686.xyz/f/NZ3ug/miui_HAYDN_OS1.0.2.0.UKKCNXM_2fa8bde61d_14.0.zip'
-        
+        default: "https://bn.d.miui.com/OS1.0.18.0.UMLCNXM/miui_COROT_OS1.0.18.0.UMLCNXM_a086066b44_14.0.zip"
+
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: 最大化构建环境
+      - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
           swap-size-mb: 8192
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-      - name: 检出仓库文件
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+      - name: Checkout repos
         uses: actions/checkout@main
-      - name: 1.准备环境
+      - name: 1. Setup
         run: |
-          sudo apt install aria2 python3 busybox zip tar apktool unzip p7zip-full zipalign zstd bc android-sdk-libsparse-utils xmlstarlet
-          sudo apt --fix-broken install
-          sudo apt update --fix-missing
-          pip3 install --upgrade pip
-          pip3 install pycryptodome requests setuptools docopt
-      - name: 2.克隆仓库
+          sudo timedatectl set-timezone Asia/Ho_Chi_Minh
+          sudo bash setup.sh
+      - name: 2. Build
         run: |
-          git clone --depth 1 https://github.com/tosasitill/hyperos_action hyperos_port
-          aria2c -s 10 -x 10 -o devices.zip -d ./hyperos_port "${{ secrets.LINK }}"
-          cd hyperos_port
-          mkdir devices && cd devices
-          7z x ../devices.zip && cd .. && rm -rf devices.zip
-      - name: 3. 开始移植
+          sudo bash buld.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}"
+      - name: 3. Upload ROM
         run: |
-          cd hyperos_port
-          aria2c -s10 -x10 "${{ github.event.inputs.STOCK_URL }}" -o ./1.zip
-          aria2c -s10 -x10 "${{ github.event.inputs.PORT_URL }}" -o ./2.zip
-          sudo bash port.sh ./1.zip ./2.zip | tee HyperOS_portlog.log
-      - name: 4.上传到 OneDrive
-        run: |
-            cd ${{ github.workspace }}
-            touch info.md
-            echo "提交日期：$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')" >> info.md
-            echo "移植底包链接：${{ github.event.inputs.STOCK_URL }}" >> info.md
-            echo "移植机型链接：${{ github.event.inputs.PORT_URL }}" >> info.md
-            echo "tosasitill made with love 0202 & 0227" >> info.md
-            echo "文件名：$name" >> info.md
-            curl -k -F "file=@/home/runner/work/hyperos_action/hyperos_action/hyperos_port/out/1.zip" -F "token=${{ secrets.RECLONE }}" -F "model=0"  -X POST "https://tmp-cli.vx-cdn.com/app/upload_cli"
-      - name: 5.发布完成 Release
-        uses: ncipollo/release-action@v1.12.0
+          User="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          url2=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[0].name')
+          [ -z "$url2" ] && url2="store$(( $RANDOM % 8 + 1 ))"
+          Linkrom="$(curl --dns-servers '1.1.1.1' -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${url2}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)"
+          echo -e "- Link ROM: $Linkrom" | tee "${GITHUB_WORKSPACE}/out/build.log"
+      - name: 4. Upload GitHub Release
+        uses: ncipollo/release-action@main
         with:
-            artifacts: "/home/runner/work/hyperos_action/hyperos_action/hyperos_port/HyperOS_portlog.log"
-            bodyfile: "${{ github.workspace }}/info.md"
-            tag: "OUTPUT_${{ env.BUILD_TIME }}_${{ github.run_id }}"
-            token: ${{ secrets.GITHUB_TOKEN }}
-            
-      - name: 5.上传移植LOG
-        uses: actions/upload-artifact@v4
-        with:
-          name: HyperOS-PortLOG
-          path: "/home/runner/work/hyperos_action/hyperos_action/hyperos_port/HyperOS_portlog.log"
-          compression-level: 9
+          name: ${{ env.os_version }}
+          tag: ${{ env.os_version }}
+          bodyFile: "${{ github.workspace }}/build.log"
+          allowUpdates: true
+          artifactErrorsFailBuild: true

@@ -200,7 +200,7 @@ zip_rom() {
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -19 -f "$super_img" -o "$super_zst" --rm
 
-    mv $LOG_FILE $READY_DIR
+    cp -rf $LOG_FILE $READY_DIR
     echo "Zip rom..."
     cd $READY_DIR
     log_file_name=$(basename $LOG_FILE)
