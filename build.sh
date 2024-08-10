@@ -311,7 +311,7 @@ framework_patcher() {
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
 
-    curl -s --L --remote-name "$url"
+    curl -s --location --remote-name "$url"
     7za x master.zip -aoa
     rm -rf master.zip
 
@@ -495,31 +495,39 @@ viet_hoa() {
     cd "$vietnamese_dir"
 
     # Tải file ZIP từ URL và lưu với tên đã chỉ định
-    curl -s --L --remote-name "$url" >/dev/null 2>&1
+    curl -s --location --remote-name "$url" >/dev/null 2>&1
     7za x master.zip -aoa >/dev/null 2>&1
     rm -f master.zip
 
-    echo "Xoá bản quyền"
-    sed -i 's/๖ۣۜßεℓ/Community/g' $vietnamese_master/*/res/values-vi/strings.xml
-    sed -i 's/MIUI.VN/Open Source/g' $vietnamese_master/*/res/values-vi/strings.xml
+    find "$vietnamese_master" -mindepth 1 -maxdepth 1 -type d | while read -r folder_vi; do
 
-    echo "Thêm âm lịch"
-    sed -i \
-        -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
-        -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
-        -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
-        -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
-        -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
-        -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
-        -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
-        -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
-        $vietnamese_master/*/res/values-vi/strings.xml
+        local strings_file="$vietnamese_master/$folder_vi/res/values-vi/strings.xml"
+        if [ ! -f "$strings_file" ]; then
+            continue
+        fi
 
-    echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
-    sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $vietnamese_master/*/res/values-vi/strings.xml
+        echo "Xoá bản quyền"
+        sed -i 's/๖ۣۜßεℓ/Community/g'$strings_file
+        sed -i 's/MIUI.VN/Open Source/g'$strings_file
 
-    echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
-    sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $vietnamese_master/*/res/values-vi/strings.xml
+        echo "Thêm âm lịch"
+        sed -i \
+            -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+            -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+            -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+            -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+            -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+            -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+            -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
+            -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
+            $strings_file
+
+        echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
+        sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g'$strings_file
+
+        echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
+        sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g'$strings_file
+    done
 
     declare -A BUILD_APK_LIST=(
         ["AuthManager"]="com.lbe.security.miui"
