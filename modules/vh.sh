@@ -181,7 +181,8 @@ viet_hoa() {
         fi
         # break
     done
-    cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
+    # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
+    find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
 
     rm -rf "$vietnamese_dir"
     cd "$PROJECT_DIR"
