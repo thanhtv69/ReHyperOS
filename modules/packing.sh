@@ -162,7 +162,8 @@ zip_rom() {
     super_zst=$READY_DIR/images/super.img.zst
 
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
-    zstd -19 -f "$super_img" -o "$super_zst" --rm
+    # zstd -19 -f "$super_img" -o "$super_zst" --rm
+    zstd -f "$super_img" -o "$super_zst" --rm
 
     end_time=$(date +%s)
     echo "Nén super.img trong $((end_time - start_time)) seconds"
@@ -172,7 +173,8 @@ zip_rom() {
     echo "Zip rom..."
     cd $READY_DIR
     log_file_name=$(basename $LOG_FILE)
-    7za -tzip a miui.zip bin/* images/* FlashROM.bat $log_file_name -y -mx9
+    # 7za -tzip a miui.zip bin/* images/* FlashROM.bat $log_file_name -y -mx9
+    7za -tzip a miui.zip bin/* images/* FlashROM.bat $log_file_name -y
     cd $PROJECT_DIR
     md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
     rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"

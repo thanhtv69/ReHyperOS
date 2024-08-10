@@ -122,7 +122,7 @@ google_photo_cts() {
     cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
     cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
 
-    sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
+    # sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
 
     echo "Done modding google photos"
 }
