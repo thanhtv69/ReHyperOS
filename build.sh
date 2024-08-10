@@ -18,6 +18,7 @@ IMAGES_DIR=$OUT_DIR/images
 EXTRACTED_DIR=$OUT_DIR/extracted
 READY_DIR=$OUT_DIR/ready_flash
 APKTOOL_COMMAND="java -jar $BIN_DIR/apktool/apktool.jar"
+APKEDITTOR_COMMAND="java -jar $BIN_DIR/apktool/APKEditor-1.3.9.jar"
 APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner.jar"
 BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
 SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
@@ -98,6 +99,10 @@ download_and_extract() {
     # Thông báo thời gian thực hiện
     end=$(date +%s)
     echo "Đã giải nén trong $((end - start)) giây"
+
+    $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system/system/framework/framework-res.apk"
+    $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system_ext/app/miuisystem/miuisystem.apk"
+    $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system_ext/framework/framework-ext-res/framework-ext-res.apk"
 }
 
 read_info() {
@@ -645,8 +650,8 @@ viet_hoa() {
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1
-        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk
+        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
 
@@ -675,11 +680,12 @@ viet_hoa() {
 #-----------------------------------------------------------------------------------------------------------------------------------
 main() {
     # tạo file log
+    start_time=$(date +%s)
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
 
-    # download_and_extract
+    download_and_extract
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
@@ -709,6 +715,9 @@ main() {
     repack_img_and_super
     genrate_script
     zip_rom
+
+    end_time=$(date +%s)
+    echo "Build ROM trong $(($end_time - $start_time)) giây"
 }
 main
 # viet_hoa
