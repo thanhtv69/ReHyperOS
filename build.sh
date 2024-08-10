@@ -425,7 +425,8 @@ recompile_smali() {
         rm -rf ${targetfilefullpath}
         zipalign -p -f -v 4 $tmp/$foldername/$targetfilename ${targetfilefullpath} >/dev/null 2>&1 || echo "zipalign error,please check for any issues"
         echo "APK ZipAlign process completed."
-        echo "Copying APK to target ${targetfilefullpath}"
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem ${targetfilefullpath}
+        echo "APK signing process completed."
     else
         echo "Copying file to target ${targetfilefullpath}"
         cp -rf $tmp/$foldername/$targetfilename ${targetfilefullpath}
@@ -500,8 +501,11 @@ viet_hoa() {
     rm -f master.zip
 
     find "$vietnamese_master" -mindepth 1 -maxdepth 1 -type d | while read -r folder_vi; do
+        # Lấy tên thư mục con
+        folder_name=$(basename "$folder_vi")
+        strings_file="$vietnamese_master/$folder_name/res/values-vi/strings.xml"
 
-        local strings_file="$vietnamese_master/$folder_vi/res/values-vi/strings.xml"
+        # Kiểm tra xem file có tồn tại không
         if [ ! -f "$strings_file" ]; then
             continue
         fi
