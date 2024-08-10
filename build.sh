@@ -624,7 +624,9 @@ viet_hoa() {
 main() {
     # tạo file log
     rm -f "$LOG_FILE" >/dev/null 2>&1
+    mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
+
     download_and_extract
     read_info
     disable_avb_and_dm_verity
