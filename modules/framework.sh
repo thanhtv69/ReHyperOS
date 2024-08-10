@@ -113,7 +113,12 @@ google_photo_cts() {
     local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
     sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
     sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' $application_smali
-    
+
+    if [ ! -f "$application_stub_smali" ]; then
+        echo "Lỗi: File $application_stub_smali không tồn tại. Hãy update guide cho Google Photos"
+        exit 1
+    fi
+
     cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
     cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
 

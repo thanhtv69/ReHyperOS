@@ -125,7 +125,7 @@ modify() {
 #----------------------------------------------------------------------------------------------------------------------------------
 main() {
     # tạo file log
-    start_time=$(date +%s)
+    start_build=$(date +%s)
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
@@ -161,7 +161,7 @@ main() {
     genrate_script
     zip_rom
 
-    end_time=$(date +%s)
-    echo "Build ROM trong $(($end_time - $start_time)) giây"
+    end_build=$(date +%s)
+    echo "Build ROM trong $(($end_build - $start_build)) giây"
 }
 main
