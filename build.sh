@@ -134,8 +134,8 @@ main() {
     read_info
     disable_avb_and_dm_verity
     remove_bloatware
-    viet_hoa
     add_google
+    viet_hoa
     #==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
