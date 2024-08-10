@@ -90,7 +90,7 @@ repack_img_and_super() {
         python3 "$BIN_DIR/contextpatch.py" "$input_folder_image" "$file_contexts_file" >/dev/null 2>&1
 
         # Thực hiện công cụ mkfs.erofs để đóng gói
-        mkfs.erofs -zlz4hc -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image" >/dev/null 2>&1 || echo "Lỗi đóng gói [$partition]"
+        mkfs.erofs -zlz4hc -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
 
         # Kiểm tra nếu quá trình đóng gói thất bại
         if [ ! -f "$output_image" ]; then

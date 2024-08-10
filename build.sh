@@ -164,5 +164,5 @@ main() {
     end_time=$(date +%s)
     echo "Build ROM trong $(($end_time - $start_time)) giây"
 }
-main
-# viet_hoa
+# main
+viet_hoa

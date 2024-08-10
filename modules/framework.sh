@@ -7,7 +7,7 @@ framework_patcher() {
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
 
-    curl -s --location --remote-name "$url"
+    curl --location --remote-name "$url"
     7za x master.zip -aoa >/dev/null 2>&1
     rm -rf master.zip
 
