@@ -150,12 +150,12 @@ viet_hoa() {
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
-        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"$sdk_version\"\n    android:compileSdkVersionCodename=\"14\"\n    package=\"overlay.$package_name\"\n    platformBuildVersionCode=\"$sdk_version\"\n    platformBuildVersionName=\"14\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
+        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"$sdk_version\"\n    android:compileSdkVersionCodename=\"14\"\n    package=\"vn.$package_name\"\n    platformBuildVersionCode=\"$sdk_version\"\n    platformBuildVersionName=\"14\">\n\n    <overlay\n        android:isStatic=\"true\"\n        android:priority=\"1\"\n        android:targetPackage=\"$package_name\" />\n</manifest>"
         local apktool_content="!!brut.androlib.meta.MetaInfo\nversion: v2.9.0-17-44416481-SNAPSHOT\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
-        find "$vietnamese_master/$apk_name.apk/res/" -name "*.xml" -exec cp {} "$vietnamese_dir/$apk_name/res/" \;
+        find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp {} "$vietnamese_dir/$apk_name/res/values-vi" \;
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
@@ -164,7 +164,7 @@ viet_hoa() {
         # rm -rf $vietnamese_dir/${apk_name}_tmp.apk
 
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || echo "ERROR Smaling failed"
-        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || echo "zipalign error,please check for any issues"
+        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
         # $APKSIGNER_COMMAND sign --ks $BIN_DIR/apktool/Key/release.jks $vietnamese_dir/packed/$apk_name.apk
