@@ -531,8 +531,8 @@ viet_hoa() {
         fi
 
         echo "Xoá bản quyền"
-        sed -i 's/๖ۣۜßεℓ/Community/g'$strings_file
-        sed -i 's/MIUI.VN/Open Source/g'$strings_file
+        sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
+        sed -i 's/MIUI.VN/Open Source/g' $strings_file
 
         echo "Thêm âm lịch"
         sed -i \
@@ -547,10 +547,10 @@ viet_hoa() {
             $strings_file
 
         echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
-        sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g'$strings_file
+        sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
 
         echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
-        sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g'$strings_file
+        sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
     done
 
     declare -A BUILD_APK_LIST=(
