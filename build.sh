@@ -420,11 +420,11 @@ decompile_smali() {
 }
 
 recompile_smali() {
-    echo "Recompiling $targetfilename"
     local targetfilefullpath="$1"
     local tmp="${OUT_DIR}/tmp"
     local targetfilename=$(basename $targetfilefullpath)
     local foldername=${targetfilename%.*}
+    echo "Recompiling $targetfilename"
 
     for dir in "$tmp/$foldername"/*/; do
         if [[ -d "$dir" ]]; then
