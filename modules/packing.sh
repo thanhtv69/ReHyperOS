@@ -5,7 +5,7 @@ download_and_extract() {
 
     if [ ! -f "$zip_name" ]; then
         green "Download $zip_name"
-        sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
+        sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL" >/dev/null 2>&1 || error "Download $zip_name failed"
     fi
 
     green "Extract $zip_name"
