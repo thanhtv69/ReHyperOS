@@ -185,5 +185,5 @@ viet_hoa() {
     cd "$PROJECT_DIR"
 
     end_time=$(date +%s)
-    echo "END Add Vietnamese and Lunar calendar in $(($end_time - $start_time))s"
+    blue "END Add Vietnamese and Lunar calendar in $(($end_time - $start_time))s"
 }
