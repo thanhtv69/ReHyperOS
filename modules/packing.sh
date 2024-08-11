@@ -6,7 +6,6 @@ download_and_extract() {
     if [ ! -f "$zip_name" ]; then
         echo "Đang tải xuống... [$zip_name]"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
-        echo "- Tải xuống từ $URL" >>"$LOG_FILE"
     fi
 
     # Giải nén file payload.bin từ file zip
@@ -184,6 +183,7 @@ zip_rom() {
 
     echo "rom_path=$rom_path" >>"$GITHUB_ENV"
     echo "rom_name=$rom_name" >>"$GITHUB_ENV"
+    echo "rom_md5=$md5" >>"$GITHUB_ENV"
     echo "os_version=$os_version" >>"$GITHUB_ENV"
     echo "device_name=$device" >>"$GITHUB_ENV"
 
