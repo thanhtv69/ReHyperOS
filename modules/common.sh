@@ -1,7 +1,8 @@
 error() {
     if [ "$#" -eq 1 ]; then
-        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;31m$1\033[0m"
-        echo -e "$message" | tee -a "$LOG_FILE"
+        local message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;31m$1\033[0m"
+        echo -e "$message"                                    # In ra terminal với màu
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] $1" >>"$LOG_FILE" # Ghi vào log không có màu
     else
         echo "Usage: error <English>"
     fi
@@ -9,8 +10,9 @@ error() {
 
 yellow() {
     if [ "$#" -eq 1 ]; then
-        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;33m$1\033[0m"
-        echo -e "$message" | tee -a "$LOG_FILE"
+        local message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;33m$1\033[0m"
+        echo -e "$message"                                    # In ra terminal với màu
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] $1" >>"$LOG_FILE" # Ghi vào log không có màu
     else
         echo "Usage: yellow <English>"
     fi
@@ -18,8 +20,9 @@ yellow() {
 
 blue() {
     if [ "$#" -eq 1 ]; then
-        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;34m$1\033[0m"
-        echo -e "$message" | tee -a "$LOG_FILE"
+        local message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;34m$1\033[0m"
+        echo -e "$message"                                    # In ra terminal với màu
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] $1" >>"$LOG_FILE" # Ghi vào log không có màu
     else
         echo "Usage: blue <English>"
     fi
@@ -27,8 +30,9 @@ blue() {
 
 green() {
     if [ "$#" -eq 1 ]; then
-        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;32m$1\033[0m"
-        echo -e "$message" | tee -a "$LOG_FILE"
+        local message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;32m$1\033[0m"
+        echo -e "$message"                                    # In ra terminal với màu
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] $1" >>"$LOG_FILE" # Ghi vào log không có màu
     else
         echo "Usage: green <English>"
     fi
