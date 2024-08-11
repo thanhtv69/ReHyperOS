@@ -28,7 +28,7 @@ blue() {
 green() {
     if [ "$#" -eq 1 ]; then
         message="\[$(date +%Y-%m-%d\ %H:%M:%S)\] \033[1;32m$1\033[0m"
-        echo -e "$message" | tee -a "$log_file"
+        echo -e "$message" | tee -a "$LOG_FILE"
     else
         echo "Usage: green <English>"
     fi
@@ -36,7 +36,6 @@ green() {
 
 remove_bloatware() {
     blue "========================================="
-    echo "- Remove bloatware" >>"$LOG_FILE"
     blue "START Remove bloatware packages"
     tr -d '\r' <"$PROJECT_DIR/bloatware" | tr -s '\n' | while IFS= read -r pkg; do
         pkg=$(echo "$pkg" | xargs) # Loại bỏ khoảng trắng thừa
