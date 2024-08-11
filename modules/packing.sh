@@ -125,7 +125,7 @@ repack_img_and_super() {
         exit 1
     fi
     echo "Tổng kích thước: $(printf "%'d" "$total_subsize")/$(printf "%'d" "$super_size") bytes"
-
+    [ "$is_clean" = true ] && rm -rf "$OUT_DIR/images" 
     lpmake $lpargs
     if [ -f "$super_out" ]; then
         # echo "Đóng gói thành công super.img"
