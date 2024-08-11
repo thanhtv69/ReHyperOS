@@ -1,5 +1,5 @@
 download_and_extract() {
-    blue "\n========================================="
+    blue "========================================="
     blue "START download and extract firmware"
     start=$(date +%s)
 
@@ -61,7 +61,7 @@ download_and_extract() {
     end=$(date +%s)
     blue "END Find missing partitions ($((end - start))s)"
 
-    blue "\n========================================="
+    blue "========================================="
     blue "START Install framework-res.apk, miuisystem.apk, framework-ext-res.apk"
     $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system/system/framework/framework-res.apk"
     $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system_ext/app/miuisystem/miuisystem.apk"
@@ -70,7 +70,7 @@ download_and_extract() {
 }
 
 repack_img_and_super() {
-    blue "\n========================================="
+    blue "========================================="
     blue "START repack images and super"
     # Kiểm tra và tạo thư mục READY_DIR nếu cần
     if [ ! -d "$READY_DIR/images" ]; then
@@ -147,7 +147,7 @@ repack_img_and_super() {
 }
 
 genrate_script() {
-    blue "\n========================================="
+    blue "========================================="
     blue "START Genrate script to flash"
     for img_file in "$IMAGES_DIR"/*.img; do
         partition_name=$(basename "$img_file" .img)
@@ -163,7 +163,7 @@ genrate_script() {
 }
 
 zip_rom() {
-    blue "\n========================================="
+    blue "========================================="
     blue "START ZSTD super.img"
     start_time=$(date +%s)
     super_img=$READY_DIR/images/super.img
@@ -176,7 +176,7 @@ zip_rom() {
     end_time=$(date +%s)
     blue "ZSTD super.img ($((end_time - start_time))s)"
 
-    blue "\n========================================="
+    blue "========================================="
     blue "START Zip rom"
     start_time=$(date +%s)
     cp -rf $LOG_FILE $READY_DIR

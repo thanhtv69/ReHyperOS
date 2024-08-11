@@ -42,7 +42,7 @@ generate_public_xml() {
 }
 
 viet_hoa() {
-    blue "\n========================================="
+    blue "========================================="
     blue "START Add Vietnamese and Lunar Calendar"
     start_time=$(date +%s)
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"

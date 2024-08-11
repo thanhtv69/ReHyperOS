@@ -1,5 +1,5 @@
 framework_patcher() {
-    blue "\n========================================="
+    blue "========================================="
     start_time=$(date +%s)
     blue "START Framework patcher by Jefino9488"
     cd $OUT_DIR
@@ -103,7 +103,7 @@ framework_patcher() {
 # }
 
 google_photo_cts() {
-    blue -e "\n========================================="
+    blue "========================================="
     blue "START Modding google photos"
     python3 "${FILES_DIR}/gg_cts/update_device.py"
     local target_folder="${OUT_DIR}/tmp/framework"

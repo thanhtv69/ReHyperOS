@@ -54,14 +54,14 @@ remove_bloatware() {
 }
 
 add_google() {
-    blue "\n========================================="
+    blue "========================================="
     blue "START Add Google Play Store, Gboard"
     cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
     blue "END Add Google Play Store, Gboard"
 }
 
 disable_avb_and_dm_verity() {
-    blue "\n========================================="
+    blue "========================================="
     blue "- Disable AVB and dm-verity"
     # find "$EXTRACTED_DIR/" -type f -name 'fstab.*' | while read -r file; do
     find "$EXTRACTED_DIR/" -path "*/etc/*" -type f -name 'fstab.*' | while read -r file; do
@@ -80,7 +80,7 @@ disable_avb_and_dm_verity() {
 }
 
 modify() {
-    blue "\n========================================="
+    blue "========================================="
     blue "Modifying features"
 
     sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/system_ext/etc/build.prop"
