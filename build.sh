@@ -96,9 +96,10 @@ main() {
     recompile_smali "$miui_services"
 
     modify
+    replace_package_install
     #==============================================
     repack_img_and_super
-    genrate_script
+    generate_script
     zip_rom
 
     end_build=$(date +%s)

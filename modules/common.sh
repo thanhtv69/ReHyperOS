@@ -93,3 +93,14 @@ modify() {
 
     blue "END Modifying features"
 }
+
+replace_package_install() {
+    blue "========================================="
+    blue "START Replace Package Installer"
+    rm -rf "$EXTRACTED_DIR/product/priv-app/MIUIPackageInstaller"
+    mkdir -p "$EXTRACTED_DIR/product/priv-app/ModPackageInstaller"
+    cp -rf "$FILES_DIR/ModPackageInstaller/MiuiPackageInstaller.apk" "$EXTRACTED_DIR/product/priv-app/ModPackageInstaller/MiuiPackageInstaller.apk"
+
+    sed -i 's/^ro\.control_privapp_permissions=.*$/ro.control_privapp_permissions=kashi/' "$EXTRACTED_DIR/vendor/build.prop"
+    blue "END Replace Package Installer"
+}
