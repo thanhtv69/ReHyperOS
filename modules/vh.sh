@@ -42,10 +42,9 @@ generate_public_xml() {
 }
 
 viet_hoa() {
-    echo -e "\n========================================="
+    blue "\n========================================="
+    blue "START Add Vietnamese and Lunar Calendar"
     start_time=$(date +%s)
-    echo "- Thêm Tiếng Việt + Âm Lịch" >>"$LOG_FILE"
-    echo "Thêm Tiếng Việt + âm lịch"
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
     local vietnamese_dir="$OUT_DIR/vietnamese"
     local vietnamese_master="$vietnamese_dir/MIUI-14-XML-Vietnamese-master/Vietnamese/main"
@@ -118,11 +117,11 @@ viet_hoa() {
     )
 
     strings_file=$vietnamese_master/*/res/values-vi/strings.xml
-    # echo "Xoá bản quyền"
+    green "Remove CopyRight"
     sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
     sed -i 's/MIUI.VN/Open Source/g' $strings_file
 
-    # echo "Thêm âm lịch"
+    green "Add Lunarian Calendar"
     sed -i \
         -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
         -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
@@ -134,17 +133,17 @@ viet_hoa() {
         -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
         $strings_file
 
-    # echo "Chỉnh sửa số ngày từ '1' đến '9' thành '01' đến '09'"
+    green "Edit Date Format"
     sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
 
-    # echo "Chỉnh sửa số tháng từ '1' đến '9' thành '01' đến '09'"
+    green "Edit Month Format"
     sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
     local ALL_DATE=$(date +%Y.%m.%d)
     local SHORT_DATE=$(date +%y%m%d)
 
     for apk_name in "${!BUILD_APK_LIST[@]}"; do
         local package_name="${BUILD_APK_LIST[$apk_name]}"
-        echo "Tên APK: $apk_name, Tên package: $package_name"
+        green "START generate $apk_name with package name: $package_name"
         rm -rf "$vietnamese_dir/$apk_name"
         mkdir -p "$vietnamese_dir/$apk_name/res/values"
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
@@ -163,22 +162,20 @@ viet_hoa() {
         # zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
         # rm -rf $vietnamese_dir/${apk_name}_tmp.apk
 
-        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || echo "ERROR Smaling failed"
-        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
+        $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
+        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
-        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
         # $APKSIGNER_COMMAND sign --ks $BIN_DIR/apktool/Key/release.jks $vietnamese_dir/packed/$apk_name.apk
-        # Kiểm tra xem tệp APK có tồn tại trong thư mục packed không
+
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
-            # Nếu tệp tồn tại, thông báo rằng overlay đã được tạo thành công
-            # echo "Đã tạo overlay $apk_name.apk thành công"
-            # cp -rf "$vietnamese_dir/packed/$apk_name.apk" "$FILES_DIR/common/product/overlay"
             rm -rf "$vietnamese_dir/$apk_name"
         else
-            # Nếu tệp không tồn tại, thông báo lỗi và kết thúc kịch bản với mã lỗi 1
-            echo "Tạo overlay $apk_name.apk thất bại"
+            error "ERROR: Create overlay $apk_name.apk failed"
             exit 1
         fi
+
+        green "END generate $apk_name with package name: $package_name"
         # break
     done
     # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
@@ -188,5 +185,5 @@ viet_hoa() {
     cd "$PROJECT_DIR"
 
     end_time=$(date +%s)
-    echo "Đã tạo overlay Tiếng Việt trong $(($end_time - $start_time)) giây"
+    echo "END Add Vietnamese and Lunar calendar in $(($end_time - $start_time))s"
 }

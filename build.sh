@@ -43,6 +43,7 @@ source modules/framework.sh
 source modules/packing.sh
 source modules/smali.sh
 source modules/vh.sh
+source modules/common.sh
 
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
@@ -50,79 +51,20 @@ read_info() {
 
     # Đọc thông tin sdk_version
     sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
-    echo "- SDK Version: $sdk_version"
+    green "- SDK Version: $sdk_version"
 
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
-    echo "- Device: $device"
+    green "- Device: $device"
 
     # Đọc thông tin version_release
     version_release=$(grep -w ro.product.build.version.release "$product_build_prop" | cut -d"=" -f2)
-    echo "- Version Release: $version_release"
-}
-
-remove_bloatware() {
-    echo ""
-    echo "========================================="
-    echo "- Remove bloatware" >>"$LOG_FILE"
-    echo "Remove bloatware packages"
-    tr -d '\r' <"$PROJECT_DIR/bloatware" | tr -s '\n' | while IFS= read -r pkg; do
-        pkg=$(echo "$pkg" | xargs) # Loại bỏ khoảng trắng thừa
-        if [[ -n "$pkg" && "$pkg" != \#* ]]; then
-            path="$EXTRACTED_DIR/$pkg"
-            if [[ -d "$path" ]]; then
-                # echo "Removing directory $path"
-                rm -rf "$path"
-            elif [[ -f "$path" ]]; then
-                # echo "Removing file $path"
-                rm -f "$path"
-            fi
-        fi
-    done
-}
-
-add_google() {
-    echo -e "\n========================================="
-    echo "- Add Google Play Store, Gboard" >>"$LOG_FILE"
-    echo "Add Google Play Store, Gboard"
-    cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
-}
-
-disable_avb_and_dm_verity() {
-    echo -e "\n========================================="
-    echo "- Disable AVB and dm-verity" >>"$LOG_FILE"
-    echo 'Đang vô hiệu hóa xác minh AVB và mã hóa dữ liệu'
-    # find "$EXTRACTED_DIR/" -type f -name 'fstab.*' | while read -r file; do
-    find "$EXTRACTED_DIR/" -path "*/etc/*" -type f -name 'fstab.*' | while read -r file; do
-        echo "Xử lý: $file"
-        sed -i -E \
-            -e 's/,avb(=[^,]+)?,/,/' \
-            -e 's/,avb_keys=[^,]+avbpubkey//' \
-            -e 's/,fileencryption=[^,]+,/,/' \
-            -e 's/,metadata_encryption=[^,]+,/,/' \
-            -e 's/,keydirectory=[^,]+,/,/' \
-            "$file"
-    done
-
-    # # Thêm # và khoảng trắng vào đầu các dòng bắt đầu bằng "overlay"
-    # sed -i '/^overlay/ s/^/# &/' "$file"
-}
-
-modify() {
-    echo ""
-    echo "========================================="
-    echo "Modifying features"
-    sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/system_ext/etc/build.prop"
-    sed -i 's/persist.miui.extm.enable=1/persist.miui.extm.enable=0/g' "$EXTRACTED_DIR/product/etc/build.prop"
-
-    sed -i 's/<bool name=\"support_hfr_video_pause\">false<\/bool>/<bool name=\"support_hfr_video_pause\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
-    sed -i 's/<bool name=\"support_dolby\">false<\/bool>/<bool name=\"support_dolby\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
-    sed -i 's/<bool name=\"support_video_hfr_mode\">false<\/bool>/<bool name=\"support_video_hfr_mode\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
-    sed -i 's/<bool name=\"support_hifi\">false<\/bool>/<bool name=\"support_hifi\">true<\/bool>/g' $EXTRACTED_DIR/product/etc/device_features/*.xml
+    green "- Version Release: $version_release"
 }
 #----------------------------------------------------------------------------------------------------------------------------------
 main() {
-    # tạo file log
+    blue "========================================="
+    blue "START build"
     start_build=$(date +%s)
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
@@ -160,6 +102,6 @@ main() {
     zip_rom
 
     end_build=$(date +%s)
-    echo "Build ROM trong $(($end_build - $start_build)) giây"
+    blue "END build in $((end_build - start_build)) seconds"
 }
 main

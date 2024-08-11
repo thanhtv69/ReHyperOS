@@ -1,20 +1,21 @@
 download_and_extract() {
-    echo -e "\n========================================="
+    blue "\n========================================="
+    blue "START download and extract firmware"
     start=$(date +%s)
 
     # Kiểm tra xem file zip đã được tải xuống chưa
     if [ ! -f "$zip_name" ]; then
-        echo "Đang tải xuống... [$zip_name]"
+        green "Download $zip_name"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL"
     fi
 
     # Giải nén file payload.bin từ file zip
-    echo "Đang giải nén... [payload.bin]"
+    green "Extract $zip_name"
     7za x "$zip_name" payload.bin -o"$OUT_DIR" -aos >/dev/null 2>&1
     [ "$is_clean" = true ] && rm -rf "$zip_name"
 
     # Tìm các phân vùng thiếu
-    echo "Đang tìm các phân vùng thiếu"
+    green "Find missing partitions"
     payload_output=$(payload-dumper-go -l "$OUT_DIR/payload.bin")
     p_payload=($(echo "$payload_output" | grep -oP '\b\w+(?=\s\()'))
 
@@ -31,25 +32,26 @@ download_and_extract() {
 
     # Giải nén các phân vùng thiếu nếu có
     if [ ! -z "$missing_partitions" ]; then
-        echo "Đang giải nén các phân vùng thiếu: [$missing_partitions]"
-        payload-dumper-go -c "$max_threads" -o "$IMAGES_DIR" -p "$missing_partitions" "$OUT_DIR/payload.bin" >/dev/null 2>&1 || echo "Lỗi giải nén [payload.bin]"
-        echo "Đã giải nén [$missing_partitions]"
+        green "Extract missing partitions"
+        payload-dumper-go -c "$max_threads" -o "$IMAGES_DIR" -p "$missing_partitions" "$OUT_DIR/payload.bin" >/dev/null 2>&1 || error "Extract missing partitions failed"
+        green "Missing partitions extracted [$missing_partitions]"
     else
-        echo "Đã đủ các phân vùng"
+        yellow "No missing partitions"
     fi
+
     [ "$is_clean" = true ] && rm -rf "$OUT_DIR/payload.bin"
 
     # Giải nén từng phân vùng cụ thể trong danh sách EXTRACT_LIST
     for partition in "${EXTRACT_LIST[@]}"; do
         if [ ! -f "$IMAGES_DIR/$partition.img" ]; then
-            echo "Không tìm thấy $partition.img"
+            error "Missing $partition.img"
             exit 1
         fi
-        echo "Đang giải nén tệp image... [$partition]"
+        green "Extract $partition.img"
         rm -rf "$EXTRACTED_DIR/$partition" >/dev/null 2>&1
         extract.erofs -x -i "$IMAGES_DIR/$partition.img" -o "$EXTRACTED_DIR" >/dev/null 2>&1
         if [ ! -d "$EXTRACTED_DIR/$partition" ]; then
-            echo "Giải nén $partition.img thất bại"
+            error "Extract $partition.img failed"
             exit 1
         fi
         [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR/$partition.img"
@@ -57,25 +59,29 @@ download_and_extract() {
 
     # Thông báo thời gian thực hiện
     end=$(date +%s)
-    echo "Đã giải nén trong $((end - start)) giây"
+    blue "END Find missing partitions ($((end - start))s)"
 
+    blue "\n========================================="
+    blue "START Install framework-res.apk, miuisystem.apk, framework-ext-res.apk"
     $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system/system/framework/framework-res.apk"
     $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system_ext/app/miuisystem/miuisystem.apk"
     $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system_ext/framework/framework-ext-res/framework-ext-res.apk"
+    blue "END Install framework-res.apk, miuisystem.apk, framework-ext-res.apk"
 }
 
 repack_img_and_super() {
-    echo -e "\n========================================="
+    blue "\n========================================="
+    blue "START repack images and super"
     # Kiểm tra và tạo thư mục READY_DIR nếu cần
     if [ ! -d "$READY_DIR/images" ]; then
-        echo "Đang tạo thư mục $READY_DIR/images..."
+        green "Create $READY_DIR/images"
         mkdir -p "$READY_DIR/images"
     fi
 
     # Lặp qua danh sách các phân vùng để đóng gói lại
     for partition in "${EXTRACT_LIST[@]}"; do
+        blue "Repack $partition.img"
         start=$(date +%s)
-        echo "Đang đóng gói lại... [$partition]"
 
         # Đặt tên các tệp đầu vào và đầu ra
         input_folder_image="$EXTRACTED_DIR/$partition"
@@ -90,20 +96,20 @@ repack_img_and_super() {
 
         # Thực hiện công cụ mkfs.erofs để đóng gói
         # mkfs.erofs -zlz4hc -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image" >/dev/null 2>&1 || echo "Mkfs erofs $partition failed"
-        make.erofs -zlz4hc -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image" >/dev/null 2>&1 || echo "Mkfs erofs $partition failed"
+        make.erofs -zlz4hc -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image" >/dev/null 2>&1 || error "Mkfs erofs $partition failed"
         # Kiểm tra nếu quá trình đóng gói thất bại
         if [ ! -f "$output_image" ]; then
-            echo "Quá trình đóng gói lại file [$output_image] thất bại."
+            error "Mkfs erofs $partition failed"
             exit 1
         fi
         [ "$is_clean" = true ] && rm -rf "$EXTRACTED_DIR/$partition"
         end=$(date +%s)
-        echo -e "Mkfs erofs $partition in $((end - start)) seconds\n\n"
+        blue "END Repack $partition.img ($((end - start))s)"
     done
 
     # Đóng gói các phân vùng thành super
+    blue "Repack super.img"
     start=$(date +%s)
-    echo "Đóng gói các phân vùng thành [super.img]"
     super_out=$READY_DIR/images/super.img
     lpargs="-F --virtual-ab --output $super_out --metadata-size 65536 --super-name super --metadata-slots 3 --device super:$super_size --group=qti_dynamic_partitions_a:$super_size --group=qti_dynamic_partitions_b:$super_size"
     total_subsize=0
@@ -116,32 +122,33 @@ repack_img_and_super() {
         total_subsize=$((total_subsize + subsize))
         args="--partition ${pname}_a:none:${subsize}:qti_dynamic_partitions_a --image ${pname}_a=${image_sub} --partition ${pname}_b:none:0:qti_dynamic_partitions_b"
         lpargs="$lpargs $args"
-        echo "[$pname] size: $(printf "%'d" "$subsize")"
+        green "[$pname] size: $(printf "%'d" "$subsize")"
     done
 
     if [ "$total_subsize" -gt "$super_size" ]; then
-        echo "Lỗi: Tổng kích thước ($total_subsize bytes) vượt quá kích thước tối đa cho phép ($super_size bytes)!"
+        error "Total subsize ($total_subsize bytes) is greater than super size ($super_size bytes)!"
         exit 1
     fi
-    echo "Tổng kích thước: $(printf "%'d" "$total_subsize")/$(printf "%'d" "$super_size") bytes"
-    
+    green "Total subsize: $(printf "%'d" "$total_subsize")/$(printf "%'d" "$super_size") bytes"
+
     lpmake $lpargs
     if [ -f "$super_out" ]; then
-        # echo "Đóng gói thành công super.img"
-        end=$(date +%s)
-        echo "LPmake super.img in $((end - start)) seconds"
+        green "Super image: $super_out"
         find "$READY_DIR/images" -type f -name '*.img' | grep -E "$(
             IFS=\|
             echo "${SUPER_LIST[*]}"
         )" | xargs rm -rf
     else
-        echo "Không thể đóng gói super.img"
+        error "LPmake super.img failed"
         exit 1
     fi
+    end=$(date +%s)
+    blue "END Repack super.img ($((end - start))s)"
 }
 
 genrate_script() {
-    echo "Tạo script để flash"
+    blue "\n========================================="
+    blue "START Genrate script to flash"
     for img_file in "$IMAGES_DIR"/*.img; do
         partition_name=$(basename "$img_file" .img)
         if ! printf '%s\n' "${EXTRACT_LIST[@]}" | grep -q "^$partition_name$" &&
@@ -149,15 +156,16 @@ genrate_script() {
             cp -rf "$img_file" "$READY_DIR/images"
         fi
     done
-    [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR" 
+    [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR"
     7za x $FILES_DIR/flash_tool.7z -o$READY_DIR -aoa >/dev/null 2>&1
     sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM.bat"
+    blue "END Genrate script to flash"
 }
 
 zip_rom() {
-    echo -e "\n========================================="
+    blue "\n========================================="
+    blue "START ZSTD super.img"
     start_time=$(date +%s)
-    echo "Nén super.img"
     super_img=$READY_DIR/images/super.img
     super_zst=$READY_DIR/images/super.img.zst
 
@@ -166,11 +174,12 @@ zip_rom() {
     zstd -f "$super_img" -o "$super_zst" --rm
 
     end_time=$(date +%s)
-    echo "Nén super.img trong $((end_time - start_time)) seconds"
+    blue "ZSTD super.img ($((end_time - start_time))s)"
 
+    blue "\n========================================="
+    blue "START Zip rom"
     start_time=$(date +%s)
     cp -rf $LOG_FILE $READY_DIR
-    echo "Zip rom..."
     cd $READY_DIR
     log_file_name=$(basename $LOG_FILE)
     # 7za -tzip a miui.zip bin/* images/* FlashROM.bat $log_file_name -y -mx9
@@ -188,5 +197,5 @@ zip_rom() {
     echo "device_name=$device" >>"$GITHUB_ENV"
 
     end_time=$(date +%s)
-    echo "Zip rom trong $((end_time - start_time)) seconds"
+    blue "END Zip rom ($((end_time - start_time))s)"
 }
