@@ -89,6 +89,7 @@ main() {
 
     framework_patcher
     # google_photo_cts
+    changhuapeng_patch
 
     recompile_smali "$framework"
     recompile_smali "$services"
