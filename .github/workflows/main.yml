@@ -50,7 +50,7 @@ jobs:
         with:
           name: ${{ env.os_version }}
           tag: ${{ env.device_name }}
-          bodyFile: "${{ github.workspace }}/log.txt"
+          # bodyFile: "${{ github.workspace }}/log.txt"
           allowUpdates: true
           artifactErrorsFailBuild: true
           token: ${{ secrets.GITHUB_TOKEN }}
