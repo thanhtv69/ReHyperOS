@@ -31,6 +31,7 @@ SUPER_LIST=('mi_ext' 'odm' 'product' 'system' 'system_dlkm' 'system_ext' 'vendor
 super_size=9126805504
 build_type="erofs" # erofs - ext4
 sdk_version="34"
+version_release=14
 
 zip_name=$(echo ${URL} | cut -d"/" -f5)
 os_version=$(echo ${URL} | cut -d"/" -f4)
@@ -55,12 +56,9 @@ read_info() {
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
     echo "- Device: $device"
 
-    echo "======================="
-    echo "Thông tin hệ thống:"
-    echo "======================="
-    echo "SDK Version: $sdk_version"
-    echo "Device: $device"
-    echo "======================="
+    # Đọc thông tin version_release
+    version_release=$(grep -w ro.product.build.version.release "$product_build_prop" | cut -d"=" -f2)
+    echo "- Version Release: $version_release"
 }
 
 remove_bloatware() {
