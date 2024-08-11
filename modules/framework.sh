@@ -101,16 +101,18 @@ framework_patcher() {
 #     end_time=$(date +%s)
 #     echo "Done modding google photos in $((end_time - start_time))s"
 # }
-
 google_photo_cts() {
     blue "========================================="
     blue "START Modding google photos"
+
     python3 "${FILES_DIR}/gg_cts/update_device.py"
+
     local target_folder="${OUT_DIR}/tmp/framework"
     local application_smali="$target_folder/classes/android/app/Application.smali"
     local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
+
     sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
-    sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' $application_smali
+    sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' "$application_smali"
 
     if [ ! -f "$application_stub_smali" ]; then
         error "File $application_stub_smali does not exist. Please update guide for Google Photos"
