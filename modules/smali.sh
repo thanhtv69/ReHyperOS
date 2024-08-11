@@ -53,8 +53,9 @@ recompile_smali() {
         $APKSIGNER_COMMAND sign --key "$BIN_DIR/apktool/Key/testkey.pk8" --cert "$BIN_DIR/apktool/Key/testkey.x509.pem" "$file_path" >/dev/null 2>&1 || error "APK signing error, please check for any issues"
         green "APK signing process completed."
     else
-        green "Copying file to target $file_path"
-        cp -rf "$tmp_dir/$base_name/$file_name" "$file_path"
+        # green "Copying file to target $file_path"
+        # cp -rf "$tmp_dir/$base_name/$file_name" "$file_path"
+        zipalign -p -f -v 4 "$tmp_dir/$base_name/$file_name" "$file_path" >/dev/null 2>&1 || error "zipalign error, please check for any issues"
     fi
 
     rm -rf "$tmp_dir/$base_name"

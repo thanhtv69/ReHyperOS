@@ -88,7 +88,7 @@ main() {
     decompile_smali "$miui_services"
 
     framework_patcher
-    google_photo_cts
+    # google_photo_cts
 
     recompile_smali "$framework"
     recompile_smali "$services"
@@ -106,3 +106,10 @@ main() {
     blue "END build in $((end_build - start_build)) seconds"
 }
 main
+# cp -f $OUT_DIR/framework.jar $EXTRACTED_DIR/system/system/framework/framework.jar
+# framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
+# decompile_smali "$framework"
+# changhuapeng_patch
+# recompile_smali "$framework"
+# decompile_smali "$framework"
+

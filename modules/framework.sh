@@ -126,3 +126,91 @@ google_photo_cts() {
 
     blue "END Modding google photos"
 }
+
+download_changhuapeng_classes() {
+    local output_file="$1"
+    local repo_api="https://api.github.com/repos/changhuapeng/FrameworkPatch/releases/latest"
+
+    # Xóa tệp đầu ra nếu đã tồn tại
+    [ -f "$output_file" ] && rm "$output_file"
+
+    # Lấy URL tải về tệp classes.dex
+    local file_url
+    file_url=$(curl -s "$repo_api" | jq -r '.assets[] | select(.name=="classes.dex") | .browser_download_url')
+
+    # Tải tệp về nếu URL được tìm thấy
+    if [ -n "$file_url" ]; then
+        curl -L -o "$output_file" "$file_url"
+        green "Tệp đã được tải về $output_file"
+    else
+        error "Không tìm thấy URL tải tệp classes.dex"
+        return 1
+    fi
+}
+
+changhuapeng_patch() {
+    blue "========================================="
+    blue "START Patching changhuapeng"
+
+    dex_count=$(find "$OUT_DIR/tmp/framework" -name "*.dex" | wc -l)
+    next_dex_index=$((dex_count + 1))
+    new_dex_name="classes${next_dex_index}.dex"
+    download_changhuapeng_classes "$OUT_DIR/tmp/framework/$new_dex_name"
+    7za a -y -mx0 -tzip "$OUT_DIR/tmp/framework/framework.jar" "$OUT_DIR/tmp/framework/$new_dex_name" >/dev/null 2>&1 || error "Failed to zip $new_dex_name"
+    rm "$OUT_DIR/tmp/framework/$new_dex_name"
+
+    # AndroidKeyStoreSpi-------------------------------------------------------------------------------------
+    AndroidKeyStoreSpi="$OUT_DIR/tmp/framework/classes3/android/security/keystore2/AndroidKeyStoreSpi.smali"
+    method_body=$(sed -n '/.method public engineGetCertificateChain/,/.end method/p' "$AndroidKeyStoreSpi")
+    return_lines=$(echo "$method_body" | grep -n 'return-object' | cut -d: -f1)
+    second_return_line_number=$(echo "$return_lines" | sed -n '2p')
+    if [ -z "$second_return_line_number" ]; then
+        error "Not found second return line in $AndroidKeyStoreSpi"
+        exit 1
+    fi
+    v3_register=$(echo "$method_body" | sed -n "${second_return_line_number}p" | awk '{print $2}')
+    if [ -z "$v3_register" ]; then
+        error "No v3 register found in $AndroidKeyStoreSpi"
+        exit 1
+    fi
+    new_code="invoke-static {${v3_register}}, Lcom/android/internal/util/framework/Android;->engineGetCertificateChain([Ljava/security/cert/Certificate;)[Ljava/security/cert/Certificate;\n    move-result-object ${v3_register}"
+    sed -i "/.method public engineGetCertificateChain/,/.end method/ {
+        /return-object ${v3_register}/i\\
+    ${new_code}
+    }" "$AndroidKeyStoreSpi"
+    green "Updated AndroidKeyStoreSpi.smali"
+
+    # Instrumentation-----------------------------------------------------------------------------
+    Instrumentation="$OUT_DIR/tmp/framework/classes/android/app/Instrumentation.smali"
+    context_register=$(grep -A 10 '.method public static newApplication' "$Instrumentation" | grep -oP '(?<=.param )p[0-9]')
+    if [ -z "$context_register" ]; then
+        error "No context register found in $Instrumentation"
+        exit 1
+    fi
+    new_code="invoke-static {$context_register}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V"
+    sed -i "/.method public static newApplication/,/.end method/ {
+        /return-object/ {
+            i\\
+    $new_code
+        }
+    }" "$Instrumentation"
+    green "Updated Instrumentation.smali"
+
+    # ApplicationPackageManager----------------------------------------------------------------------
+    ApplicationPackageManager="$OUT_DIR/tmp/framework/classes/android/app/ApplicationPackageManager.smali"
+    if [ ! -f "$ApplicationPackageManager" ]; then
+        error "File $ApplicationPackageManager does not exist. Please update guide"
+        exit 1
+    fi
+    sed -i '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/,/^.end method/{//!d}' "$ApplicationPackageManager"
+    sed -i -e '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/a\    .registers 3\n    .param p1, "name"    # Ljava/lang/String;\n\n    .line 768\n    const/4 v0, 0x0\n\n    invoke-virtual {p0, p1, v0}, Landroid/app/ApplicationPackageManager;->hasSystemFeature(Ljava/lang/String;I)Z\n\n    move-result p1\n\n    return p1' "$ApplicationPackageManager"
+    green "Updated ApplicationPackageManager.smali"
+
+    # Very important! Remove all "boot-framework.*" files!
+
+    find "$EXTRACTED_DIR/system/system/framework/" -type f -name "boot-framework.*" -exec rm {} +
+    find "$EXTRACTED_DIR/system/system/framework/arm/" -type f -name "boot-framework.*" -exec rm {} +
+    find "$EXTRACTED_DIR/system/system/framework/arm64/" -type f -name "boot-framework.*" -exec rm {} +
+    
+    blue "END Patching changhuapeng"
+}
