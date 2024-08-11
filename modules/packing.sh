@@ -97,6 +97,7 @@ repack_img_and_super() {
             echo "Quá trình đóng gói lại file [$output_image] thất bại."
             exit 1
         fi
+        [ "$is_clean" = true ] && rm -rf "$EXTRACTED_DIR/$partition"
         end=$(date +%s)
         echo -e "Mkfs erofs $partition in $((end - start)) seconds\n\n"
     done
