@@ -12,7 +12,7 @@ download_and_extract() {
     # Giải nén file payload.bin từ file zip
     green "Extract $zip_name"
     7za x "$zip_name" payload.bin -o"$OUT_DIR" -aos >/dev/null 2>&1
-    [ "$is_clean" = true ] && rm -rf "$zip_name"
+    [[ "$is_clean" == true ]] && rm -rf "$zip_name"
 
     # Tìm các phân vùng thiếu
     green "Find missing partitions"
@@ -39,7 +39,7 @@ download_and_extract() {
         yellow "No missing partitions"
     fi
 
-    [ "$is_clean" = true ] && rm -rf "$OUT_DIR/payload.bin"
+    [[ "$is_clean" == true ]] && rm -rf "$OUT_DIR/payload.bin"
 
     # Giải nén từng phân vùng cụ thể trong danh sách EXTRACT_LIST
     for partition in "${EXTRACT_LIST[@]}"; do
@@ -54,7 +54,7 @@ download_and_extract() {
             error "Extract $partition.img failed"
             exit 1
         fi
-        [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR/$partition.img"
+        [[ "$is_clean" == true ]] && rm -rf "$IMAGES_DIR/$partition.img"
     done
 
     # Thông báo thời gian thực hiện
@@ -102,7 +102,7 @@ repack_img_and_super() {
             error "Mkfs erofs $partition failed"
             exit 1
         fi
-        [ "$is_clean" = true ] && rm -rf "$EXTRACTED_DIR/$partition"
+        [[ "$is_clean" == true ]] && rm -rf "$EXTRACTED_DIR/$partition"
         end=$(date +%s)
         blue "END Repack $partition.img ($((end - start))s)"
     done
@@ -156,7 +156,7 @@ genrate_script() {
             cp -rf "$img_file" "$READY_DIR/images"
         fi
     done
-    [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR"
+    [[ "$is_clean" == true ]] && rm -rf "$IMAGES_DIR"
     7za x $FILES_DIR/flash_tool.7z -o$READY_DIR -aoa >/dev/null 2>&1
     sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM.bat"
     blue "END Genrate script to flash"

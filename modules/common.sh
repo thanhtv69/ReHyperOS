@@ -1,6 +1,6 @@
 error() {
     if [ "$#" -eq 1 ]; then
-        message="\[$(date +%Y-%m-%d\ %H:%M:%S)\] \033[1;31m$1\033[0m"
+        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;31m$1\033[0m"
         echo -e "$message" | tee -a "$LOG_FILE"
     else
         echo "Usage: error <English>"
@@ -9,7 +9,7 @@ error() {
 
 yellow() {
     if [ "$#" -eq 1 ]; then
-        message="\[$(date +%Y-%m-%d\ %H:%M:%S)\] \033[1;33m$1\033[0m"
+        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;33m$1\033[0m"
         echo -e "$message" | tee -a "$LOG_FILE"
     else
         echo "Usage: yellow <English>"
@@ -18,7 +18,7 @@ yellow() {
 
 blue() {
     if [ "$#" -eq 1 ]; then
-        message="\[$(date +%Y-%m-%d\ %H:%M:%S)\] \033[1;34m$1\033[0m"
+        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;34m$1\033[0m"
         echo -e "$message" | tee -a "$LOG_FILE"
     else
         echo "Usage: blue <English>"
@@ -27,7 +27,7 @@ blue() {
 
 green() {
     if [ "$#" -eq 1 ]; then
-        message="\[$(date +%Y-%m-%d\ %H:%M:%S)\] \033[1;32m$1\033[0m"
+        message="[$(date +%Y-%m-%d\ %H:%M:%S)] \033[1;32m$1\033[0m"
         echo -e "$message" | tee -a "$LOG_FILE"
     else
         echo "Usage: green <English>"
