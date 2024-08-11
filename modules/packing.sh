@@ -125,7 +125,7 @@ repack_img_and_super() {
         exit 1
     fi
     echo "Tổng kích thước: $(printf "%'d" "$total_subsize")/$(printf "%'d" "$super_size") bytes"
-    [ "$is_clean" = true ] && rm -rf "$OUT_DIR/images" 
+    
     lpmake $lpargs
     if [ -f "$super_out" ]; then
         # echo "Đóng gói thành công super.img"
@@ -150,7 +150,7 @@ genrate_script() {
             cp -rf "$img_file" "$READY_DIR/images"
         fi
     done
-
+    [ "$is_clean" = true ] && rm -rf "$IMAGES_DIR" 
     7za x $FILES_DIR/flash_tool.7z -o$READY_DIR -aoa >/dev/null 2>&1
     sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM.bat"
 }
