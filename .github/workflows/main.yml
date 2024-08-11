@@ -36,12 +36,12 @@ jobs:
           url2=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[0].name')
           [ -z "$url2" ] && url2="store$(( $RANDOM % 8 + 1 ))"
           Linkrom="$(curl --dns-servers '1.1.1.1' -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${url2}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)"
-          sudo echo -e "- Link ROM: $Linkrom" | tee "${GITHUB_WORKSPACE}/out/build.log"
+          echo "- Link ROM: $Linkrom" | sudo tee "${GITHUB_WORKSPACE}/out/build.log"
       - name: Upload GitHub Release
         uses: ncipollo/release-action@main
         with:
           name: ${{ env.os_version }}
           tag: ${{ env.os_version }}
-          bodyFile: "${{ github.workspace }}/build.log"
+          bodyFile: "${{ github.workspace }}/out/build.log"
           allowUpdates: true
           artifactErrorsFailBuild: true
