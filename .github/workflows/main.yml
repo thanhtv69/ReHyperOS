@@ -54,4 +54,3 @@ jobs:
           bodyFile: "${{ github.workspace }}/log.txt"
           allowUpdates: true
           artifactErrorsFailBuild: true
-          token: ${{ secrets.GITHUB_TOKEN }}
