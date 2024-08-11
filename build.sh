@@ -63,13 +63,13 @@ read_info() {
 }
 #----------------------------------------------------------------------------------------------------------------------------------
 main() {
-    blue "========================================="
-    blue "START build"
-    start_build=$(date +%s)
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
 
+    blue "========================================="
+    blue "START build"
+    start_build=$(date +%s)
     download_and_extract
     read_info
     disable_avb_and_dm_verity
