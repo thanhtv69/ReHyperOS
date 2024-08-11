@@ -203,7 +203,7 @@ changhuapeng_patch() {
         exit 1
     fi
     sed -i '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/,/^.end method/{//!d}' "$ApplicationPackageManager"
-    sed -i -e '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/a\    .registers 3\n    .param p1, "name"    # Ljava/lang/String;\n\n    .line 768\n    const/4 v0, 0x0\n\n    invoke-virtual {p0, p1, v0}, Landroid/app/ApplicationPackageManager;->hasSystemFeature(Ljava/lang/String;I)Z\n\n    move-result p1\n\n    return p1' "$ApplicationPackageManager"
+    sed -i -e '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/a\    .registers 3\n    .param p1, "name"    # Ljava/lang/String;\n\n    .line 768\n    const/4 v0, 0x0\n\n    invoke-virtual {p0, p1, v0}, Landroid/app/ApplicationPackageManager;->hasSystemFeature(Ljava/lang/String;I)Z\n\n    move-result v0\n\n    invoke-static {v0, p1}, Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z\n\n    move-result v0\n\n    return v0' "$ApplicationPackageManager"
     green "Updated ApplicationPackageManager.smali"
 
     # Very important! Remove all "boot-framework.*" files!
