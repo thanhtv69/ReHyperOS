@@ -115,6 +115,30 @@ viet_hoa() {
         ["Traceur"]="com.android.traceur"
         ["Bluetooth"]="com.android.bluetooth"
     )
+    for dir in "$vietnamese_master"/*/; do
+        dirname=$(basename "$dir" .apk)
+        if [[ -n "${BUILD_APK_LIST[$dirname]}" ]]; then
+            continue
+        fi
+        apk_path=""
+        if [ -d "$EXTRACTED_DIR"/*/*/"$dirname" ]; then
+            apk_path=$(find "$EXTRACTED_DIR"/*/*/"$dirname" -name "*.apk" -type f -print -quit)
+        fi
+
+        if [ -z "$apk_path" ] && [ -d "$EXTRACTED_DIR/system"/*/*/"$dirname" ]; then
+            apk_path=$(find "$EXTRACTED_DIR"/system/*/*/"$dirname" -name "*.apk" -type f -print -quit)
+        fi
+
+        if [ -z "$apk_path" ]; then
+            continue
+        fi
+
+        apk_info=$($APKEDITTOR_COMMAND info -i "$apk_path")
+        package_name=$(echo "$apk_info" | grep '^package=' | awk -F'=' '{print $2}' | tr -d '" ')
+        # app_name=$(echo "$apk_info" | grep '^AppName=' | awk -F'=' '{print $2}' | tr -d '" ')
+        BUILD_APK_LIST["$dirname"]="$package_name"
+        yellow "Add $dirname with $package_name to list Overlay"
+    done
 
     strings_file=$vietnamese_master/*/res/values-vi/strings.xml
     green "Remove CopyRight"
@@ -158,10 +182,6 @@ viet_hoa() {
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        # $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk
-        # zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk
-        # rm -rf $vietnamese_dir/${apk_name}_tmp.apk
-
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
@@ -176,8 +196,8 @@ viet_hoa() {
         fi
 
         green "END generate $apk_name with package name: $package_name"
-        # break
     done
+
     # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
     find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
 

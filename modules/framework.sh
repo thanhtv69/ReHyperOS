@@ -32,11 +32,12 @@ framework_patcher() {
     mv -f "$OUT_DIR/tmp/miui-services/classes" "$framework_patcher/miui_services_classes"
 
     cd $framework_patcher
-    # nếu core_patch=true
     if [[ "$core_patch" == true ]]; then
+        yellow "Core patching"
         python3 "framework_patch.py"
         python3 "miui-service_Patch.py"
     else
+        yellow "Not core patching"
         python3 "nframework_patch.py"
         python3 "nservices_patch.py"
     fi
