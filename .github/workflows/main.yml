@@ -6,6 +6,14 @@ on:
         description: "Official ROM URL"
         required: true
         default: "https://bn.d.miui.com/OS1.0.18.0.UMLCNXM/miui_COROT_OS1.0.18.0.UMLCNXM_a086066b44_14.0.zip"
+      CorePatch:
+        description: "Core patch"
+        required: false
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "false"
 
 jobs:
   build:
@@ -44,6 +52,7 @@ jobs:
             echo "- Official ROM: ${{ github.event.inputs.URL }}"
             echo "- ReHyper ROM: $Linkrom"
             echo "- MD5: ${{ env.rom_md5 }}"
+            echo "- Core patch: ${{ github.event.inputs.CorePatch }}"
             echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"
           } >> "${GITHUB_WORKSPACE}/log.txt"
       - name: Upload GitHub Release
