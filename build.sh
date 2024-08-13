@@ -32,6 +32,7 @@ super_size=9126805504
 build_type="erofs" # erofs - ext4
 sdk_version="34"
 version_release=14
+core_patch=false
 
 zip_name=$(echo ${URL} | cut -d"/" -f5)
 os_version=$(echo ${URL} | cut -d"/" -f4)
@@ -83,18 +84,18 @@ main() {
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 
     decompile_smali "$framework"
-    # decompile_smali "$services"
-    # decompile_smali "$miui_framework"
-    # decompile_smali "$miui_services"
+    decompile_smali "$services"
+    decompile_smali "$miui_framework"
+    decompile_smali "$miui_services"
 
-    # framework_patcher
+    framework_patcher
     google_photo_cts
     changhuapeng_patch
 
     recompile_smali "$framework"
-    # recompile_smali "$services"
-    # recompile_smali "$miui_framework"
-    # recompile_smali "$miui_services"
+    recompile_smali "$services"
+    recompile_smali "$miui_framework"
+    recompile_smali "$miui_services"
 
     modify
     replace_package_install
