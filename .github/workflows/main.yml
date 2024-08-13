@@ -52,5 +52,5 @@ jobs:
           name: ${{ env.os_version }}
           tag: ${{ env.device_name }}
           bodyFile: "${{ github.workspace }}/log.txt"
-          allowUpdates: true
+          allowUpdates: false
           artifactErrorsFailBuild: true
