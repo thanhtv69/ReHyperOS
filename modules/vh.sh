@@ -117,9 +117,11 @@ viet_hoa() {
     )
     for dir in "$vietnamese_master"/*/; do
         dirname=$(basename "$dir" .apk)
-        if [[ -n "${BUILD_APK_LIST[$dirname]}" ]]; then
+        if [[ -n "${BUILD_APK_LIST[$dirname]}" ]] || [[ "$dirname" == "framework-ext-res" ]]; then
             continue
         fi
+
+
         apk_path=""
         if [ -d "$EXTRACTED_DIR"/*/*/"$dirname" ]; then
             apk_path=$(find "$EXTRACTED_DIR"/*/*/"$dirname" -name "*.apk" -type f -print -quit)
@@ -198,8 +200,6 @@ viet_hoa() {
             error "ERROR: Create overlay $apk_name.apk failed"
             exit 1
         fi
-
-        green "END generate $apk_name with package name: $package_name"
     done
 
     # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"

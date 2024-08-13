@@ -149,7 +149,7 @@ generate_script() {
 
     [[ "$is_clean" == true ]] && rm -rf "$IMAGES_DIR"
     7za x "$FILES_DIR/flash_tool.7z" -o"$READY_DIR" -aoa >/dev/null 2>&1
-    sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM.bat"
+    sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM."*
 
     blue "END Generate script to flash"
 }
