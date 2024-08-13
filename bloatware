@@ -112,3 +112,10 @@ product/priv-app/GooglePlayServicesUpdater
 product/app/MIUISecurityInputMethod
 product/app/AnalyticsCore
 product/etc/permissions/cn.google.services.xml
+product/app/MipayService
+product/app/MiGameService_MTK
+product/priv-app/AutoRegistration
+product/data-app/MIUIVideo
+product/data-app/MIUIHuanji
+
+product/data-app/XMRemoteController

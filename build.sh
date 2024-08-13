@@ -39,11 +39,17 @@ android_version=$(echo ${URL} | cut -d"_" -f5 | cut -d"." -f1)
 build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
+
 source modules/framework.sh
 source modules/packing.sh
 source modules/smali.sh
 source modules/vh.sh
 source modules/common.sh
+
+yellow "============================================================="
+yellow "Zip Name: $zip_name"
+yellow "Max Threads: $max_threads"
+yellow "============================================================="
 
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
