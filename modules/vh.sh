@@ -136,6 +136,10 @@ viet_hoa() {
         apk_info=$($APKEDITTOR_COMMAND info -i "$apk_path")
         package_name=$(echo "$apk_info" | grep '^package=' | awk -F'=' '{print $2}' | tr -d '" ')
         # app_name=$(echo "$apk_info" | grep '^AppName=' | awk -F'=' '{print $2}' | tr -d '" ')
+
+        if [[ $(printf "%s\n" "${BUILD_APK_LIST[@]}" | grep -Fxq "$package_name") ]]; then
+            continue
+        fi
         BUILD_APK_LIST["$dirname"]="$package_name"
         yellow "Add $dirname with $package_name to list Overlay"
     done
