@@ -54,6 +54,8 @@ remove_bloatware() {
             fi
         fi
     done
+    yellow "Move data-app to app"
+    mv -rf "$EXTRACTED_DIR/product/data-app/." "$EXTRACTED_DIR/product/app/"
     blue "END Remove bloatware packages"
 }
 

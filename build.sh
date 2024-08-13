@@ -39,17 +39,11 @@ android_version=$(echo ${URL} | cut -d"_" -f5 | cut -d"." -f1)
 build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
-
 source modules/framework.sh
 source modules/packing.sh
 source modules/smali.sh
 source modules/vh.sh
 source modules/common.sh
-
-yellow "============================================================="
-yellow "Zip Name: $zip_name"
-yellow "Max Threads: $max_threads"
-yellow "============================================================="
 
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
@@ -89,18 +83,18 @@ main() {
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 
     decompile_smali "$framework"
-    decompile_smali "$services"
-    decompile_smali "$miui_framework"
-    decompile_smali "$miui_services"
+    # decompile_smali "$services"
+    # decompile_smali "$miui_framework"
+    # decompile_smali "$miui_services"
 
-    framework_patcher
+    # framework_patcher
     google_photo_cts
     changhuapeng_patch
 
     recompile_smali "$framework"
-    recompile_smali "$services"
-    recompile_smali "$miui_framework"
-    recompile_smali "$miui_services"
+    # recompile_smali "$services"
+    # recompile_smali "$miui_framework"
+    # recompile_smali "$miui_services"
 
     modify
     replace_package_install
