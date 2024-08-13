@@ -66,65 +66,63 @@ framework_patcher() {
     blue "END Framework patcher by Jefino9488 ($(($end_time - $start_time))s)"
 }
 
-google_photo_cts() {
-    blue "\n========================================="
-    blue "Mod google photos unlimited, bypass CTS, spoofing Device"
-    start_time=$(date +%s)
-
-    # TODO switch snap and mtk
-    7za x "$FILES_DIR/gg_cts/mtk.zip" "android/app" -o"$OUT_DIR/tmp/framework/classes" -aoa >/dev/null 2>&1
-    7za x "$FILES_DIR/gg_cts/mtk.zip" "android/security" -o"$OUT_DIR/tmp/framework/classes3" -aoa >/dev/null 2>&1
-    7za x "$FILES_DIR/gg_cts/mtk.zip" "com" -o"$OUT_DIR/tmp/framework/classes5" -aoa >/dev/null 2>&1
-
-    local build_prop_org="$EXTRACTED_DIR/system/system/build.prop"
-    local build_prop_mod="$FILES_DIR/gg_cts/build.prop"
-    while IFS= read -r line; do
-        if ! grep -Fxq "$line" "$build_prop_org"; then
-            sed -i "/# end of file/i $line" "$build_prop_org"
-        fi
-    done <$build_prop_mod
-
-    local white_key_org="$EXTRACTED_DIR/system_ext/etc/cust_prop_white_keys_list"
-    local white_key_mod="$FILES_DIR/gg_cts/cust_prop_white_keys_list"
-    while IFS= read -r line; do
-        if ! grep -Fxq "$line" "$white_key_org"; then
-            printf "\n%s" "$line" >>"$white_key_org"
-        fi
-    done <$white_key_mod
-
-    mkdir -p "$EXTRACTED_DIR/product/app/SoraOS"
-    cp -f "$FILES_DIR/gg_cts/SoraOS.apk" "$EXTRACTED_DIR/product/app/SoraOS/SoraOS.apk"
-
-    sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
-
-    end_time=$(date +%s)
-    blue "Done modding google photos in $((end_time - start_time))s"
-}
 # google_photo_cts() {
-#     blue "========================================="
-#     blue "START Modding google photos"
+#     blue "\n========================================="
+#     blue "Mod google photos unlimited, bypass CTS, spoofing Device"
+#     start_time=$(date +%s)
 
-#     python3 "${FILES_DIR}/gg_cts/update_device.py"
+#     # TODO switch snap and mtk
+#     7za x "$FILES_DIR/gg_cts/mtk.zip" "android/app" -o"$OUT_DIR/tmp/framework/classes" -aoa >/dev/null 2>&1
+#     7za x "$FILES_DIR/gg_cts/mtk.zip" "android/security" -o"$OUT_DIR/tmp/framework/classes3" -aoa >/dev/null 2>&1
+#     7za x "$FILES_DIR/gg_cts/mtk.zip" "com" -o"$OUT_DIR/tmp/framework/classes5" -aoa >/dev/null 2>&1
 
-#     local target_folder="${OUT_DIR}/tmp/framework"
-#     local application_smali="$target_folder/classes/android/app/Application.smali"
-#     local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
+#     local build_prop_org="$EXTRACTED_DIR/system/system/build.prop"
+#     local build_prop_mod="$FILES_DIR/gg_cts/build.prop"
+#     while IFS= read -r line; do
+#         if ! grep -Fxq "$line" "$build_prop_org"; then
+#             sed -i "/# end of file/i $line" "$build_prop_org"
+#         fi
+#     done <$build_prop_mod
 
-#     sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
-#     sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' "$application_smali"
+#     local white_key_org="$EXTRACTED_DIR/system_ext/etc/cust_prop_white_keys_list"
+#     local white_key_mod="$FILES_DIR/gg_cts/cust_prop_white_keys_list"
+#     while IFS= read -r line; do
+#         if ! grep -Fxq "$line" "$white_key_org"; then
+#             printf "\n%s" "$line" >>"$white_key_org"
+#         fi
+#     done <$white_key_mod
 
-#     if [ ! -f "$application_stub_smali" ]; then
-#         error "File $application_stub_smali does not exist. Please update guide for Google Photos"
-#         exit 1
-#     fi
+#     mkdir -p "$EXTRACTED_DIR/product/app/SoraOS"
+#     cp -f "$FILES_DIR/gg_cts/SoraOS.apk" "$EXTRACTED_DIR/product/app/SoraOS/SoraOS.apk"
 
-#     cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
-#     cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
+#     sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
 
-#     # sed -i 's/ro.product.first_api_level=33/ro.product.first_api_level=32/g' "$EXTRACTED_DIR/vendor/build.prop"
-
-#     blue "END Modding google photos"
+#     end_time=$(date +%s)
+#     blue "Done modding google photos in $((end_time - start_time))s"
 # }
+google_photo_cts() {
+    blue "========================================="
+    blue "START Modding google photos"
+
+    python3 "${FILES_DIR}/gg_cts/update_device.py"
+
+    local target_folder="${OUT_DIR}/tmp/framework"
+    local application_smali="$target_folder/classes/android/app/Application.smali"
+    local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
+
+    sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
+    sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' "$application_smali"
+
+    if [ ! -f "$application_stub_smali" ]; then
+        error "File $application_stub_smali does not exist. Please update guide for Google Photos"
+        exit 1
+    fi
+
+    cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
+    cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
+
+    blue "END Modding google photos"
+}
 
 download_changhuapeng_classes() {
     local output_file="$1"
@@ -165,13 +163,13 @@ changhuapeng_patch() {
     return_lines=$(echo "$method_body" | grep -n 'return-object' | cut -d: -f1)
     second_return_line_number=$(echo "$return_lines" | sed -n '2p')
     if [ -z "$second_return_line_number" ]; then
-        yellow "Not found second return line in $AndroidKeyStoreSpi"
+        error "Not found second return line in $AndroidKeyStoreSpi"
         exit 1
     fi
     v3_register=$(echo "$method_body" | sed -n "${second_return_line_number}p" | awk '{print $2}')
     if [ -z "$v3_register" ]; then
-        yellow "No v3 register found in $AndroidKeyStoreSpi"
-        # exit 1
+        error "No v3 register found in $AndroidKeyStoreSpi"
+        exit 1
     fi
     new_code="invoke-static {${v3_register}}, Lcom/android/internal/util/framework/Android;->engineGetCertificateChain([Ljava/security/cert/Certificate;)[Ljava/security/cert/Certificate;\n    move-result-object ${v3_register}"
     sed -i "/.method public engineGetCertificateChain/,/.end method/ {
@@ -184,8 +182,8 @@ changhuapeng_patch() {
     Instrumentation="$OUT_DIR/tmp/framework/classes/android/app/Instrumentation.smali"
     context_register=$(grep -A 10 '.method public static newApplication' "$Instrumentation" | grep -oP '(?<=.param )\w+(?=, "context")')
     if [ -z "$context_register" ]; then
-        yellow "No context register found in $Instrumentation"
-        # exit 1
+        error "No context register found in $Instrumentation"
+        exit 1
     fi
     new_code="invoke-static {$context_register}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V"
     sed -i "/.method public static newApplication/,/.end method/ {
@@ -198,8 +196,8 @@ changhuapeng_patch() {
 
     context_register=$(grep -A 10 '.method public newApplication' "$Instrumentation" | grep -oP '(?<=.param )\w+(?=, "context")')
     if [ -z "$context_register" ]; then
-        yellow "No context register found in $Instrumentation"
-        # exit 1
+        error "No context register found in $Instrumentation"
+        exit 1
     fi
 
     new_code="invoke-static {$context_register}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V"
@@ -214,8 +212,8 @@ changhuapeng_patch() {
     # ApplicationPackageManager----------------------------------------------------------------------
     ApplicationPackageManager="$OUT_DIR/tmp/framework/classes/android/app/ApplicationPackageManager.smali"
     if [ ! -f "$ApplicationPackageManager" ]; then
-        yellow "File $ApplicationPackageManager does not exist. Please update guide"
-        # exit 1
+        error "File $ApplicationPackageManager does not exist. Please update guide"
+        exit 1
     fi
     sed -i '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/,/^.end method/{//!d}' "$ApplicationPackageManager"
     sed -i -e '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/a\    .registers 3\n    .param p1, "name"    # Ljava/lang/String;\n\n    .line 768\n    const/4 v0, 0x0\n\n    invoke-virtual {p0, p1, v0}, Landroid/app/ApplicationPackageManager;->hasSystemFeature(Ljava/lang/String;I)Z\n\n    move-result v0\n\n    invoke-static {v0, p1}, Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z\n\n    move-result v0\n\n    return v0' "$ApplicationPackageManager"
@@ -224,7 +222,6 @@ changhuapeng_patch() {
     # Very important! Remove all "boot-framework.*" files!
 
     find "$EXTRACTED_DIR/system/system/framework/" -type f -name "boot-framework.*" -exec rm {} +
-    find "$EXTRACTED_DIR/system/system/framework/*/" -type f -name "boot-framework.*" -exec rm {} +
 
     rm -f "$EXTRACTED_DIR/system/system/framework/arm/boot-framework.vdex"
     rm -f "$EXTRACTED_DIR/system/system/framework/arm64/boot-framework.vdex"
