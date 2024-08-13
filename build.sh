@@ -71,7 +71,7 @@ main() {
     blue "========================================="
     blue "START build"
     start_build=$(date +%s)
-    download_and_extract
+    # download_and_extract
     read_info
     disable_avb_and_dm_verity
     viet_hoa
