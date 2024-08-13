@@ -6,7 +6,6 @@ GITHUB_WORKSPACE="$3"
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
 sudo chmod 777 -R ./bin/*
 is_clean=$([ -n "$1" ] && echo true || echo false)
-export PATH="./bin:$PATH"
 PROJECT_DIR=$(pwd)
 
 BIN_DIR=$PROJECT_DIR/bin
@@ -25,6 +24,7 @@ SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
 
 # export PATH=$(pwd)/bin/$(uname)/$(uname -m)/:$PATH
 # echo $(uname)/$(uname -m)
+export PATH="$BIN_DIR:$PATH"
 
 EXTRACT_LIST=('product' 'system' 'system_ext' 'vendor')
 SUPER_LIST=('mi_ext' 'odm' 'product' 'system' 'system_dlkm' 'system_ext' 'vendor' 'vendor_dlkm' 'odm_dlkm')

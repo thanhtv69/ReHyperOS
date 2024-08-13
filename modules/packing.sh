@@ -2,57 +2,59 @@ download_and_extract() {
     blue "========================================="
     blue "START download and extract firmware"
     local start=$(date +%s)
-
+    
     if [ ! -f "$zip_name" ]; then
         green "Download $zip_name"
         sudo aria2c -x16 -j$(nproc) -U "Mozilla/5.0" -d "$PROJECT_DIR" "$URL" >/dev/null 2>&1 || error "Download $zip_name failed"
     fi
-
+    
     green "Extract $zip_name"
     7za x "$zip_name" payload.bin -o"$OUT_DIR" -aos >/dev/null 2>&1
     [[ "$is_clean" == true ]] && rm -rf "$zip_name"
-
+    
     green "Find missing partitions"
     local payload_output
     payload_output=$(payload-dumper-go -l "$OUT_DIR/payload.bin")
     local p_payload
     p_payload=($(echo "$payload_output" | grep -oP '\b\w+(?=\s\()'))
-
+    
     local missing_partitions=""
     for p in "${p_payload[@]}"; do
         if [ ! -e "$IMAGES_DIR/$p.img" ]; then
             missing_partitions="${missing_partitions:+$missing_partitions,}$p"
         fi
     done
-
+    
     if [ -n "$missing_partitions" ]; then
         green "Extract missing partitions"
-        payload-dumper-go -c "$max_threads" -o "$IMAGES_DIR" -p "$missing_partitions" "$OUT_DIR/payload.bin" >/dev/null 2>&1 || error "Extract missing partitions failed"
+        payload-dumper-go -c $max_threads -o "$IMAGES_DIR" -p "$missing_partitions" "$OUT_DIR/payload.bin" >/dev/null 2>&1 || error "Extract missing partitions failed"
         green "Missing partitions extracted [$missing_partitions]"
     else
         yellow "No missing partitions"
     fi
-
+    
     [[ "$is_clean" == true ]] && rm -rf "$OUT_DIR/payload.bin"
-
+    
     for partition in "${EXTRACT_LIST[@]}"; do
         if [ ! -f "$IMAGES_DIR/$partition.img" ]; then
             error "Missing $partition.img"
             exit 1
         fi
-        green "Extract $partition.img"
+        image_type=$(gettype -i $IMAGES_DIR/$partition.img)
+        green "Extract $partition.img - Type: $image_type"
+
         rm -rf "$EXTRACTED_DIR/$partition" >/dev/null 2>&1
-        extract.erofs -x -i "$IMAGES_DIR/$partition.img" -o "$EXTRACTED_DIR" >/dev/null 2>&1
+        extract.erofs -s -x -T$max_threads  -i "$IMAGES_DIR/$partition.img" -o "$EXTRACTED_DIR"
         if [ ! -d "$EXTRACTED_DIR/$partition" ]; then
             error "Extract $partition.img failed"
             exit 1
         fi
         [[ "$is_clean" == true ]] && rm -rf "$IMAGES_DIR/$partition.img"
     done
-
+    
     local end=$(date +%s)
     blue "END Find missing partitions ($((end - start))s)"
-
+    
     blue "========================================="
     blue "START Install framework-res.apk, miuisystem.apk, framework-ext-res.apk"
     $APKTOOL_COMMAND "if" "$EXTRACTED_DIR/system/system/framework/framework-res.apk"
@@ -65,26 +67,26 @@ repack_img_and_super() {
     blue "========================================="
     blue "START repack images and super"
     local start=$(date +%s)
-
+    
     if [ ! -d "$READY_DIR/images" ]; then
         green "Create $READY_DIR/images"
         mkdir -p "$READY_DIR/images"
     fi
-
+    
     for partition in "${EXTRACT_LIST[@]}"; do
         green "Repack $partition.img"
         start=$(date +%s)
-
+        
         local input_folder_image="$EXTRACTED_DIR/$partition"
         local output_image="$READY_DIR/images/$partition.img"
         local fs_config_file="$EXTRACTED_DIR/config/${partition}_fs_config"
         local file_contexts_file="$EXTRACTED_DIR/config/${partition}_file_contexts"
-
+        
         python3 "$BIN_DIR/fspatch.py" "$input_folder_image" "$fs_config_file" >/dev/null 2>&1
         python3 "$BIN_DIR/contextpatch.py" "$input_folder_image" "$file_contexts_file" >/dev/null 2>&1
-
-        mkfs.erofs --quiet -zlz4hc -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
-
+        
+        mkfs.erofs --quiet -zlz4hc --workers=$max_threads -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
+        
         if [ ! -f "$output_image" ]; then
             error "Mkfs erofs $partition failed"
             exit 1
@@ -93,13 +95,13 @@ repack_img_and_super() {
         local end=$(date +%s)
         green "END Repack $partition.img ($((end - start))s)"
     done
-
+    
     blue "Repack super.img"
     start=$(date +%s)
     local super_out="$READY_DIR/images/super.img"
     local lpargs="-F --virtual-ab --output $super_out --metadata-size 65536 --super-name super --metadata-slots 3 --device super:$super_size --group=qti_dynamic_partitions_a:$super_size --group=qti_dynamic_partitions_b:$super_size"
     local total_subsize=0
-
+    
     for pname in "${SUPER_LIST[@]}"; do
         local image_sub="$READY_DIR/images/$pname.img"
         if ! printf '%s\n' "${EXTRACT_LIST[@]}" | grep -q "^$pname$"; then
@@ -111,13 +113,13 @@ repack_img_and_super() {
         lpargs="$lpargs $args"
         green "[$pname] size: $(printf "%'d" "$subsize")"
     done
-
+    
     if [ "$total_subsize" -gt "$super_size" ]; then
         error "Total subsize ($total_subsize bytes) is greater than super size ($super_size bytes)!"
         exit 1
     fi
     green "Total subsize: $(printf "%'d" "$total_subsize")/$(printf "%'d" "$super_size") bytes"
-
+    
     lpmake $lpargs
     if [ -f "$super_out" ]; then
         green "Super image: $super_out"
@@ -136,19 +138,19 @@ repack_img_and_super() {
 generate_script() {
     blue "========================================="
     blue "START Generate script to flash"
-
+    
     for img_file in "$IMAGES_DIR"/*.img; do
         local partition_name=$(basename "$img_file" .img)
         if ! printf '%s\n' "${EXTRACT_LIST[@]}" | grep -q "^$partition_name$" &&
-            ! printf '%s\n' "${SUPER_LIST[@]}" | grep -q "^$partition_name$"; then
+        ! printf '%s\n' "${SUPER_LIST[@]}" | grep -q "^$partition_name$"; then
             cp -rf "$img_file" "$READY_DIR/images"
         fi
     done
-
+    
     [[ "$is_clean" == true ]] && rm -rf "$IMAGES_DIR"
     7za x "$FILES_DIR/flash_tool.7z" -o"$READY_DIR" -aoa >/dev/null 2>&1
     sed -i "s/Model_code/${device}/g" "$READY_DIR/FlashROM.bat"
-
+    
     blue "END Generate script to flash"
 }
 zip_rom() {
@@ -157,13 +159,13 @@ zip_rom() {
     local start_time=$(date +%s)
     local super_img="$READY_DIR/images/super.img"
     local super_zst="$READY_DIR/images/super.img.zst"
-
+    
     find "$READY_DIR"/images/*.img -exec touch -t 200901010000.00 {} \;
     zstd -f "$super_img" -o "$super_zst" --rm
-
+    
     local end_time=$(date +%s)
     blue "ZSTD super.img ($((end_time - start_time))s)"
-
+    
     blue "========================================="
     blue "START Zip rom"
     local start_time=$(date +%s)
@@ -176,13 +178,13 @@ zip_rom() {
     local rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"
     local rom_path="$READY_DIR/$rom_name"
     mv "$READY_DIR/miui.zip" "$rom_path"
-
+    
     echo "rom_path=$rom_path" >>"$GITHUB_ENV"
     echo "rom_name=$rom_name" >>"$GITHUB_ENV"
     echo "rom_md5=$md5" >>"$GITHUB_ENV"
     echo "os_version=$os_version" >>"$GITHUB_ENV"
     echo "device_name=$device" >>"$GITHUB_ENV"
-
+    
     local end_time=$(date +%s)
     blue "END Zip rom ($((end_time - start_time))s)"
 }

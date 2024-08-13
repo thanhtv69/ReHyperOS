@@ -53,8 +53,8 @@ viet_hoa() {
     cd "$vietnamese_dir"
 
     # Tải file ZIP từ URL và lưu với tên đã chỉ định
-    curl --location --remote-name "$url"
-    7za x master.zip -aoa >/dev/null 2>&1
+    curl --location --remote-name "$url" || cp -f $FILES_DIR/MIUI-14-XML-Vietnamese-master.zip $vietnamese_dir/master.zip
+    7za x master.zip -aoa
     rm -f master.zip
     declare -A BUILD_APK_LIST=(
         ["AuthManager"]="com.lbe.security.miui"
