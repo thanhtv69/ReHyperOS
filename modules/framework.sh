@@ -165,13 +165,13 @@ changhuapeng_patch() {
     return_lines=$(echo "$method_body" | grep -n 'return-object' | cut -d: -f1)
     second_return_line_number=$(echo "$return_lines" | sed -n '2p')
     if [ -z "$second_return_line_number" ]; then
-        error "Not found second return line in $AndroidKeyStoreSpi"
+        yellow "Not found second return line in $AndroidKeyStoreSpi"
         exit 1
     fi
     v3_register=$(echo "$method_body" | sed -n "${second_return_line_number}p" | awk '{print $2}')
     if [ -z "$v3_register" ]; then
-        error "No v3 register found in $AndroidKeyStoreSpi"
-        exit 1
+        yellow "No v3 register found in $AndroidKeyStoreSpi"
+        # exit 1
     fi
     new_code="invoke-static {${v3_register}}, Lcom/android/internal/util/framework/Android;->engineGetCertificateChain([Ljava/security/cert/Certificate;)[Ljava/security/cert/Certificate;\n    move-result-object ${v3_register}"
     sed -i "/.method public engineGetCertificateChain/,/.end method/ {
@@ -184,8 +184,8 @@ changhuapeng_patch() {
     Instrumentation="$OUT_DIR/tmp/framework/classes/android/app/Instrumentation.smali"
     context_register=$(grep -A 10 '.method public static newApplication' "$Instrumentation" | grep -oP '(?<=.param )\w+(?=, "context")')
     if [ -z "$context_register" ]; then
-        error "No context register found in $Instrumentation"
-        exit 1
+        yellow "No context register found in $Instrumentation"
+        # exit 1
     fi
     new_code="invoke-static {$context_register}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V"
     sed -i "/.method public static newApplication/,/.end method/ {
@@ -198,8 +198,8 @@ changhuapeng_patch() {
 
     context_register=$(grep -A 10 '.method public newApplication' "$Instrumentation" | grep -oP '(?<=.param )\w+(?=, "context")')
     if [ -z "$context_register" ]; then
-        error "No context register found in $Instrumentation"
-        exit 1
+        yellow "No context register found in $Instrumentation"
+        # exit 1
     fi
 
     new_code="invoke-static {$context_register}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V"
@@ -214,8 +214,8 @@ changhuapeng_patch() {
     # ApplicationPackageManager----------------------------------------------------------------------
     ApplicationPackageManager="$OUT_DIR/tmp/framework/classes/android/app/ApplicationPackageManager.smali"
     if [ ! -f "$ApplicationPackageManager" ]; then
-        error "File $ApplicationPackageManager does not exist. Please update guide"
-        exit 1
+        yellow "File $ApplicationPackageManager does not exist. Please update guide"
+        # exit 1
     fi
     sed -i '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/,/^.end method/{//!d}' "$ApplicationPackageManager"
     sed -i -e '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/a\    .registers 3\n    .param p1, "name"    # Ljava/lang/String;\n\n    .line 768\n    const/4 v0, 0x0\n\n    invoke-virtual {p0, p1, v0}, Landroid/app/ApplicationPackageManager;->hasSystemFeature(Ljava/lang/String;I)Z\n\n    move-result v0\n\n    invoke-static {v0, p1}, Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z\n\n    move-result v0\n\n    return v0' "$ApplicationPackageManager"
