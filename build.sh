@@ -32,7 +32,7 @@ super_size=9126805504
 build_type="erofs" # erofs - ext4
 sdk_version="34"
 version_release=14
-core_patch=false
+core_patch=true
 
 zip_name=$(echo ${URL} | cut -d"/" -f5)
 os_version=$(echo ${URL} | cut -d"/" -f4)
@@ -108,3 +108,4 @@ main() {
     blue "END build in $((end_build - start_build)) seconds"
 }
 main
+# viet_hoa

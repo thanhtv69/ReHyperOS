@@ -663,13 +663,13 @@
 
     const-string v1, "ID"
 
-    const-string p0, "AP31.240617.009"
+    const-string p0, "AP31.240617.015"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
     
     const-string v1, "FINGERPRINT"
 
-    const-string p0, "google/husky_beta/husky:15/AP31.240617.009/12094726:user/release-keys"
+    const-string p0, "google/husky_beta/husky:15/AP31.240617.015/12207491:user/release-keys"
 
     invoke-static {v1, p0}, Landroid/app/ApplicationStub;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
 

@@ -53,7 +53,7 @@ viet_hoa() {
     cd "$vietnamese_dir"
 
     # Tải file ZIP từ URL và lưu với tên đã chỉ định
-    curl --location --remote-name "$url" || cp -f $FILES_DIR/MIUI-14-XML-Vietnamese-master.zip $vietnamese_dir/master.zip
+    curl --location --remote-name --max-time 10 "$url" || cp -f $FILES_DIR/MIUI-14-XML-Vietnamese-master.zip $vietnamese_dir/master.zip
     7za x master.zip -aoa
     rm -f master.zip
     declare -A BUILD_APK_LIST=(
@@ -115,36 +115,36 @@ viet_hoa() {
         ["Traceur"]="com.android.traceur"
         ["Bluetooth"]="com.android.bluetooth"
     )
-    for dir in "$vietnamese_master"/*/; do
-        dirname=$(basename "$dir" .apk)
-        if [[ -n "${BUILD_APK_LIST[$dirname]}" ]] || [[ "$dirname" == "framework-ext-res" ]]; then
-            continue
-        fi
+    # for dir in "$vietnamese_master"/*/; do
+    #     dirname=$(basename "$dir" .apk)
+    #     if [[ -n "${BUILD_APK_LIST[$dirname]}" ]] || [[ "$dirname" == "framework-ext-res" ]]; then
+    #         continue
+    #     fi
 
 
-        apk_path=""
-        if [ -d "$EXTRACTED_DIR"/*/*/"$dirname" ]; then
-            apk_path=$(find "$EXTRACTED_DIR"/*/*/"$dirname" -name "*.apk" -type f -print -quit)
-        fi
+    #     apk_path=""
+    #     if [ -d "$EXTRACTED_DIR"/*/*/"$dirname" ]; then
+    #         apk_path=$(find "$EXTRACTED_DIR"/*/*/"$dirname" -name "*.apk" -type f -print -quit)
+    #     fi
 
-        if [ -z "$apk_path" ] && [ -d "$EXTRACTED_DIR/system"/*/*/"$dirname" ]; then
-            apk_path=$(find "$EXTRACTED_DIR"/system/*/*/"$dirname" -name "*.apk" -type f -print -quit)
-        fi
+    #     if [ -z "$apk_path" ] && [ -d "$EXTRACTED_DIR/system"/*/*/"$dirname" ]; then
+    #         apk_path=$(find "$EXTRACTED_DIR"/system/*/*/"$dirname" -name "*.apk" -type f -print -quit)
+    #     fi
 
-        if [ -z "$apk_path" ]; then
-            continue
-        fi
+    #     if [ -z "$apk_path" ]; then
+    #         continue
+    #     fi
 
-        apk_info=$($APKEDITTOR_COMMAND info -i "$apk_path")
-        package_name=$(echo "$apk_info" | grep '^package=' | awk -F'=' '{print $2}' | tr -d '" ')
-        # app_name=$(echo "$apk_info" | grep '^AppName=' | awk -F'=' '{print $2}' | tr -d '" ')
+    #     apk_info=$($APKEDITTOR_COMMAND info -i "$apk_path")
+    #     package_name=$(echo "$apk_info" | grep '^package=' | awk -F'=' '{print $2}' | tr -d '" ')
+    #     # app_name=$(echo "$apk_info" | grep '^AppName=' | awk -F'=' '{print $2}' | tr -d '" ')
 
-        if [[ $(printf "%s\n" "${BUILD_APK_LIST[@]}" | grep -Fxq "$package_name") ]]; then
-            continue
-        fi
-        BUILD_APK_LIST["$dirname"]="$package_name"
-        yellow "Add $dirname with $package_name to list Overlay"
-    done
+    #     if [[ $(printf "%s\n" "${BUILD_APK_LIST[@]}" | grep -Fxq "$package_name") ]]; then
+    #         continue
+    #     fi
+    #     BUILD_APK_LIST["$dirname"]="$package_name"
+    #     yellow "Add $dirname with $package_name to list Overlay"
+    # done
 
     strings_file=$vietnamese_master/*/res/values-vi/strings.xml
     green "Remove CopyRight"
@@ -179,8 +179,10 @@ viet_hoa() {
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
-        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest\n	xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"$sdk_version\"\n    android:compileSdkVersionCodename=\"$version_release\"\n    package=\"overlay.$package_name\" \n    platformBuildVersionCode=\"$sdk_version\" \n    platformBuildVersionName=\"$version_release\">\n    <application\n    android:extractNativeLibs=\"false\" \n    android:hasCode=\"false\"/>\n    <overlay \n    android:isStatic=\"true\" \n    android:priority=\"0\" \n    android:targetPackage=\"$package_name\"/>\n</manifest>"
-        local apktool_content="version: 2.9.3\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\n  minSdkVersion: 23\n  targetSdkVersion: $sdk_version\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: 1\n  versionName: 1.0\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
+        # local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<manifest\n	xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:compileSdkVersion=\"$sdk_version\"\n    android:compileSdkVersionCodename=\"$version_release\"\n    package=\"overlay.$package_name\" \n    platformBuildVersionCode=\"$sdk_version\" \n    platformBuildVersionName=\"$version_release\">\n    <application\n    android:extractNativeLibs=\"false\" \n    android:hasCode=\"false\"/>\n    <overlay \n    android:isStatic=\"true\" \n    android:priority=\"999\" \n    android:targetPackage=\"$package_name\"/>\n</manifest>"
+        # local apktool_content="version: 2.9.3\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\n  minSdkVersion: 23\n  targetSdkVersion: $sdk_version\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: 1\n  versionName: 1.0\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
+        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"$SHORT_DATE\"\n    android:versionName=\"$ALL_DATE\"\n    package=\"vn.overlay.$package_name\">\n    <overlay\n        android:priority=\"999\"\n        android:targetPackage=\"$package_name\"\n        android:isStatic=\"true\"/>\n</manifest>"
+        local apktool_content="!!brut.androlib.meta.MetaInfo\napkFileName: $apk_name.apk\ncompressionType: false\ndoNotCompress:\n- resources.arsc\nisFrameworkApk: false\npackageInfo:\n  forcedPackageId: '127'\n  renameManifestPackage: null\nsdkInfo: null\nsharedLibrary: false\nsparseResources: true\nunknownFiles: {}\nusesFramework:\n  ids:\n  - 1\n  tag: null\nversion: 2.4.1\nversionInfo:\n  versionCode: '$SHORT_DATE'\n  versionName: $ALL_DATE"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
@@ -191,7 +193,7 @@ viet_hoa() {
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
-        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/private_key.pk8 --cert $BIN_DIR/apktool/Key/my_certificate.pem $vietnamese_dir/packed/$apk_name.apk >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
         # $APKSIGNER_COMMAND sign --ks $BIN_DIR/apktool/Key/release.jks $vietnamese_dir/packed/$apk_name.apk
 
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then

@@ -6,7 +6,7 @@ framework_patcher() {
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
 
-    curl --location --remote-name "$url" || cp -f $FILES_DIR/FrameworkPatcher-main.zip $OUT_DIR/master.zip
+    curl --location --remote-name --max-time 30 "$url" || cp -f $FILES_DIR/FrameworkPatcher-main.zip $OUT_DIR/master.zip
     7za x master.zip -aoa
     rm -rf master.zip
 
@@ -111,7 +111,7 @@ google_photo_cts() {
     blue "========================================="
     blue "START Modding google photos"
 
-    python3 "${FILES_DIR}/gg_cts/update_device.py" || yellow "Update device fail!"
+    # python3 "${FILES_DIR}/gg_cts/update_device.py" || yellow "Update device fail!"
 
     local target_folder="${OUT_DIR}/tmp/framework"
     local application_smali="$target_folder/classes/android/app/Application.smali"
