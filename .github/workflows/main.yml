@@ -14,6 +14,9 @@ on:
           - "true"
           - "false"
         default: "true"
+      Note:
+        description: "Ghi chú"
+        default: ""
 
 jobs:
   build:
@@ -54,6 +57,7 @@ jobs:
             echo "- MD5: ${{ env.rom_md5 }}"
             echo "- Core patch: ${{ github.event.inputs.CorePatch }}"
             echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"
+            echo "- Note: ${{ github.event.inputs.Note }}"
           } >> "${GITHUB_WORKSPACE}/log.txt"
 
           date=$(date +'%Y-%m-%d_%H-%M-%S')
