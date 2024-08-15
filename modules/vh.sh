@@ -179,7 +179,7 @@ viet_hoa() {
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
-        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"$SHORT_DATE\"\n    android:versionName=\"$ALL_DATE\"\n    package=\"vn.overlay.$package_name\">\n    <overlay\n        android:priority=\"999\"\n        android:targetPackage=\"$package_name\"\n        android:isStatic=\"true\" />\n</manifest>"
+        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"$SHORT_DATE\"\n    android:versionName=\"$ALL_DATE\"\n    package=\"vn.overlay.$package_name\">\n    <overlay\n        android:priority=\"999\"\n        android:targetPackage=\"$package_name\"\n        android:isStatic=\"true\"\n         android:requiredSystemPropertyName=\"\"\n        android:requiredSystemPropertyValue=\"\" />\n</manifest>"
         local apktool_content="!!brut.androlib.meta.MetaInfo\napkFileName: $apk_name.apk\ncompressionType: false\ndoNotCompress:\n- resources.arsc\nisFrameworkApk: false\npackageInfo:\n  forcedPackageId: '127'\n  renameManifestPackage: null\nsdkInfo: null\nsharedLibrary: false\nsparseResources: true\nunknownFiles: {}\nusesFramework:\n  ids:\n  - 1\n  tag: null\nversion: 2.4.1\nversionInfo:\n  versionCode: '$SHORT_DATE'\n  versionName: $ALL_DATE"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
@@ -191,7 +191,7 @@ viet_hoa() {
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk # >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk  # >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
-        # $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
+        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
         # $APKSIGNER_COMMAND sign --ks $BIN_DIR/apktool/Key/release.jks $vietnamese_dir/packed/$apk_name.apk
 
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
