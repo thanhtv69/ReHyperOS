@@ -71,6 +71,7 @@ main() {
     blue "START build"
     start_build=$(date +%s)
     download_and_extract
+    extract_img
     read_info
     disable_avb_and_dm_verity
     viet_hoa
@@ -89,7 +90,7 @@ main() {
 
     framework_patcher
     google_photo_cts
-    # changhuapeng_patch
+    changhuapeng_patch
 
     recompile_smali "$framework"
     recompile_smali "$services"

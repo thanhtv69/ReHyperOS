@@ -1,6 +1,6 @@
 download_and_extract() {
     blue "========================================="
-    blue "START download and extract firmware"
+    blue "START download and extract payload"
     local start=$(date +%s)
 
     if [ ! -f "$zip_name" ]; then
@@ -34,7 +34,14 @@ download_and_extract() {
     fi
 
     [[ "$is_clean" == true ]] && rm -rf "$OUT_DIR/payload.bin"
+    local end=$(date +%s)
+    blue "END Find missing partitions ($((end - start))s)"
+}
 
+extract_img() {
+    blue "========================================="
+    blue "START extract images"
+    local start=$(date +%s)
     for partition in "${EXTRACT_LIST[@]}"; do
         if [ ! -f "$IMAGES_DIR/$partition.img" ]; then
             error "Missing $partition.img"
