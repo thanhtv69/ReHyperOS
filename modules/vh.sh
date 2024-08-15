@@ -191,7 +191,7 @@ viet_hoa() {
         $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk # >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk  # >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
-        $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
+        # $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
         # $APKSIGNER_COMMAND sign --ks $BIN_DIR/apktool/Key/release.jks $vietnamese_dir/packed/$apk_name.apk
 
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
