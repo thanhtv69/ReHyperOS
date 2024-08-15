@@ -133,29 +133,32 @@ google_photo_cts() {
 
 download_changhuapeng_classes() {
     local output_file="$1"
-    # local repo_api="https://api.github.com/repos/changhuapeng/FrameworkPatch/releases/latest"
     local repo_api="https://api.github.com/repos/thanhtv69/FukkFramework/releases/latest"
 
     # Xóa tệp đầu ra nếu đã tồn tại
     [ -f "$output_file" ] && rm "$output_file"
 
-    # Lấy URL tải về tệp classes.dex
-    local file_url
-    # file_url=$(curl "$repo_api" | jq -r '.assets[] | select(.name=="classes.dex") | .browser_download_url')
+    # Lấy URL tải về tất cả các tệp .dex
+    local file_urls
     file_urls=$(curl -s "$repo_api" | jq -r '.assets[] | select(.name | endswith(".dex")) | .browser_download_url')
 
-    # Tải xuống tệp .dex từ URL đã chọn và kiểm tra sự thành công
-    if [ -n "$file_url" ]; then
+    # Kiểm tra nếu có ít nhất một URL
+    if [ -n "$file_urls" ]; then
+        # Chọn một URL ngẫu nhiên từ danh sách
+        local file_url
+        file_url=$(echo "$file_urls" | shuf -n 1)
+
+        # Tải xuống tệp .dex từ URL đã chọn và kiểm tra sự thành công
         curl -L -o "$output_file" "$file_url"
         if [ $? -eq 0 ]; then
             echo "Tệp đã được tải về $output_file"
         else
             echo "Lỗi: Tải tệp không thành công."
-            exit 1
+            return 1
         fi
     else
         echo "Không tìm thấy URL tải tệp .dex"
-        exit 1
+        return 1
     fi
 }
 
