@@ -1,5 +1,5 @@
 #!/bin/bash
-URL="${1:-"https://bn.d.miui.com/OS1.0.18.0.UMLCNXM/miui_COROT_OS1.0.18.0.UMLCNXM_a086066b44_14.0.zip"}"
+URL="${1:-"https://bn.d.miui.com/OS1.0.22.0.UMLCNXM/miui_COROT_OS1.0.22.0.UMLCNXM_7b539d7cbd_14.0.zip"}"
 GITHUB_ENV="$2"
 GITHUB_WORKSPACE="$3"
 
@@ -108,4 +108,3 @@ main() {
     blue "END build in $((end_build - start_build)) seconds"
 }
 main
-# viet_hoa
