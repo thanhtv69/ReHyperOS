@@ -133,22 +133,29 @@ google_photo_cts() {
 
 download_changhuapeng_classes() {
     local output_file="$1"
-    local repo_api="https://api.github.com/repos/changhuapeng/FrameworkPatch/releases/latest"
+    # local repo_api="https://api.github.com/repos/changhuapeng/FrameworkPatch/releases/latest"
+    local repo_api="https://api.github.com/repos/thanhtv69/FukkFramework/releases/latest"
 
     # Xóa tệp đầu ra nếu đã tồn tại
     [ -f "$output_file" ] && rm "$output_file"
 
     # Lấy URL tải về tệp classes.dex
     local file_url
-    file_url=$(curl "$repo_api" | jq -r '.assets[] | select(.name=="classes.dex") | .browser_download_url')
+    # file_url=$(curl "$repo_api" | jq -r '.assets[] | select(.name=="classes.dex") | .browser_download_url')
+    file_urls=$(curl -s "$repo_api" | jq -r '.assets[] | select(.name | endswith(".dex")) | .browser_download_url')
 
-    # Tải tệp về nếu URL được tìm thấy
+    # Tải xuống tệp .dex từ URL đã chọn và kiểm tra sự thành công
     if [ -n "$file_url" ]; then
         curl -L -o "$output_file" "$file_url"
-        green "Tệp đã được tải về $output_file"
+        if [ $? -eq 0 ]; then
+            echo "Tệp đã được tải về $output_file"
+        else
+            echo "Lỗi: Tải tệp không thành công."
+            exit 1
+        fi
     else
-        error "Không tìm thấy URL tải tệp classes.dex"
-        return 1
+        echo "Không tìm thấy URL tải tệp .dex"
+        exit 1
     fi
 }
 
@@ -159,8 +166,7 @@ changhuapeng_patch() {
     dex_count=$(find "$OUT_DIR/tmp/framework" -name "*.dex" | wc -l)
     next_dex_index=$((dex_count + 1))
     new_dex_name="classes${next_dex_index}.dex"
-    # download_changhuapeng_classes "$OUT_DIR/tmp/framework/$new_dex_name"
-    cp -f "${FILES_DIR}/gg_cts/classes.dex" "$OUT_DIR/tmp/framework/$new_dex_name"
+    download_changhuapeng_classes "$OUT_DIR/tmp/framework/$new_dex_name" || cp -f "${FILES_DIR}/gg_cts/classes.dex" "$OUT_DIR/tmp/framework/$new_dex_name"
     7za a -y -mx0 -tzip "$OUT_DIR/tmp/framework/framework.jar" "$OUT_DIR/tmp/framework/$new_dex_name" >/dev/null 2>&1 || error "Failed to zip $new_dex_name"
     rm "$OUT_DIR/tmp/framework/$new_dex_name"
 
