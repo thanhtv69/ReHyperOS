@@ -56,7 +56,7 @@ jobs:
             echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"
           } >> "${GITHUB_WORKSPACE}/log.txt"
 
-          date=$(date +'%Y-%m-%d')
+          date=$(date +'%Y-%m-%d_%H-%M-%S')
           echo "V_TAG=${{env.device_name}}-${date}" >> $GITHUB_ENV
       - name: Upload GitHub Release
         uses: ncipollo/release-action@main
