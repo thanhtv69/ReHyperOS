@@ -57,7 +57,7 @@ jobs:
           for server in $servers; do
               # Ping the server and get the average response time
               response_time=$(ping -c 4 "$server.gofile.io" | grep 'avg' | awk -F'/' '{print $5}')
-              
+              echo "Server: ${server}.gofile.io - Ping Time: ${response_time} ms"
               # If response time is not empty and less than the best time found so far, update best server
               if [[ ! -z "$response_time" && $(echo "$response_time < $best_time" | bc) -eq 1 ]]; then
                   best_time=$response_time
