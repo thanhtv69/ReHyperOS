@@ -47,7 +47,7 @@ jobs:
           User="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
           url2=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[0].name')
           [ -z "$url2" ] && url2="store$(( $RANDOM % 8 + 1 ))"
-          Linkrom="$(curl --dns-servers '1.1.1.1' -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${url2}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)"
+          Linkrom="$(curl -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${url2}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)"
 
           echo "Link ROM: $Linkrom"
           touch "${GITHUB_WORKSPACE}/log.txt"
