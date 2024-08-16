@@ -45,17 +45,41 @@ jobs:
       - name: Upload ROM
         run: |
           User="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          url2=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[0].name')
-          [ -z "$url2" ] && url2="store$(( $RANDOM % 8 + 1 ))"
-          Linkrom="$(curl -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${url2}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)"
+
+          # Get the list of servers from Gofile API
+          servers=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[].name')
+
+          # Define a variable to keep track of the best server
+          best_server=""
+          best_time=999999
+
+          # Loop through each server to find the one with the lowest ping time
+          for server in $servers; do
+              # Ping the server and get the average response time
+              response_time=$(ping -c 4 "$server.gofile.io" | grep 'avg' | awk -F'/' '{print $5}')
+              
+              # If response time is not empty and less than the best time found so far, update best server
+              if [[ ! -z "$response_time" && $(echo "$response_time < $best_time" | bc) -eq 1 ]]; then
+                  best_time=$response_time
+                  best_server=$server
+              fi
+          done
+
+          # If no best server found, choose a default server
+          if [[ -z "$best_server" ]]; then
+              best_server="store$(( $RANDOM % 8 + 1 ))"
+          fi
+
+          # Upload the file to the best server
+          Linkrom=$(curl -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${best_server}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)
           
           # Kiểm tra lỗi và thoát nếu có lỗi
           if [ -z "$Linkrom" ] || [[ "$Linkrom" == "null" ]]; then
             echo "Error: Failed to get download link."
             exit 1
           fi
+          echo "File uploaded. Download link: $Linkrom"
 
-          echo "Link ROM: $Linkrom"
           touch "${GITHUB_WORKSPACE}/log.txt"
           chmod 777 "${GITHUB_WORKSPACE}/log.txt"
           {
