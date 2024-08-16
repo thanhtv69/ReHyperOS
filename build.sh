@@ -17,7 +17,7 @@ EXTRACTED_DIR=$OUT_DIR/extracted
 READY_DIR=$OUT_DIR/ready_flash
 APKTOOL_COMMAND="java -jar $BIN_DIR/apktool/apktool.jar"
 APKEDITTOR_COMMAND="java -jar $BIN_DIR/apktool/APKEditor-1.3.9.jar"
-APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner-8b73d613.jar"
+APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner.jar"
 BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
 SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
 

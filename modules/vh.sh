@@ -2,22 +2,53 @@ generate_public_xml() {
     local input_dir=$1
     local output_file=$2
 
-    # Kiểm tra xem thư mục đầu vào có tồn tại không
+    # Check if the input directory exists
     if [ ! -d "$input_dir" ]; then
-        echo "Thư mục đầu vào không tồn tại."
+        echo "Input directory does not exist."
         return 1
     fi
 
-    # Bắt đầu tạo file public.xml
+    # Initialize counters for IDs
+    local array_id_counter=0
+    local plurals_id_counter=0
+    local string_id_counter=0
+
+    generate_id() {
+        local type=$1
+        local array_counter=$2
+        local plurals_counter=$3
+        local string_counter=$4
+        local id=""
+
+        case $type in
+        "array")
+            id=$(printf "0x7f02%04x" $array_counter)
+            ;;
+        "plurals")
+            id=$(printf "0x7f03%04x" $plurals_counter)
+            ;;
+        "string")
+            id=$(printf "0x7f04%04x" $string_counter)
+            ;;
+        *)
+            echo "Unknown type: $type"
+            return 1
+            ;;
+        esac
+
+        echo "$id"
+    }
+
+    # Start creating the public.xml file
     echo '<?xml version="1.0" encoding="utf-8"?>' >"$output_file"
     echo '<resources>' >>"$output_file"
 
-    # Duyệt qua tất cả các file XML trong thư mục
+    # Iterate through all XML files in the directory
     for file in "$input_dir"/*.xml; do
-        # Lấy tên file mà không có phần mở rộng
+        # Get the base name of the file without the extension
         local basename=$(basename "$file" .xml)
 
-        # Xác định loại tài nguyên dựa trên tên file
+        # Determine the resource type based on the file name
         local type=""
         if [[ $basename == *"strings"* ]]; then
             type="string"
@@ -26,19 +57,36 @@ generate_public_xml() {
         elif [[ $basename == *"plurals"* ]]; then
             type="plurals"
         else
-            continue # Nếu không khớp với bất kỳ loại nào, bỏ qua file này
+            continue # Skip this file if it doesn't match any known type
         fi
 
-        # Trích xuất tên tài nguyên và thêm vào public.xml
+        # Extract resource names and add to public.xml
         grep -oP '(?<=name=")[^"]+' "$file" | while read -r name; do
-            echo "    <public type=\"$type\" name=\"$name\" />" >>"$output_file"
+            local id
+            id=$(generate_id "$type" $array_id_counter $plurals_id_counter $string_id_counter) # Generate a new unique ID
+
+            # Update the counters based on the type
+            case $type in
+            "array")
+                array_id_counter=$((array_id_counter + 1))
+                ;;
+            "plurals")
+                plurals_id_counter=$((plurals_id_counter + 1))
+                ;;
+            "string")
+                string_id_counter=$((string_id_counter + 1))
+                ;;
+            esac
+
+            # echo "Generated ID: $id" # Debug output
+            echo "    <public type=\"$type\" name=\"$name\" id=\"$id\" />" >>"$output_file"
         done
     done
 
-    # Kết thúc file public.xml
+    # Finish the public.xml file
     echo '</resources>' >>"$output_file"
 
-    # echo "Tạo $output_file hoàn thành!"
+    echo "Creation of $output_file completed!"
 }
 
 viet_hoa() {
@@ -145,10 +193,10 @@ viet_hoa() {
     #     yellow "Add $dirname with $package_name to list Overlay"
     # done
 
-    strings_file=$vietnamese_master/*/res/values-vi/strings.xml
-    green "Remove CopyRight"
-    sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
-    sed -i 's/MIUI.VN/Open Source/g' $strings_file
+    # strings_file=$vietnamese_master/*/res/values-vi/strings.xml
+    # green "Remove CopyRight"
+    # sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
+    # sed -i 's/MIUI.VN/Open Source/g' $strings_file
 
     green "Add Lunarian Calendar"
     sed -i \
@@ -180,7 +228,7 @@ viet_hoa() {
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
         local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"$SHORT_DATE\"\n    android:versionName=\"$ALL_DATE\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"1.0-$SHORT_DATE\"\n    package=\"vn.overlay.$package_name\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n    <overlay\n        android:priority=\"999\"\n        android:targetPackage=\"$package_name\"\n        android:isStatic=\"true\"/>\n</manifest>"
-        local apktool_content="!!brut.androlib.meta.MetaInfo\napkFileName: $apk_name.apk\ncompressionType: false\ndoNotCompress:\n- resources.arsc\nisFrameworkApk: false\npackageInfo:\n  forcedPackageId: '127'\n  renameManifestPackage: null\nsdkInfo: null\nsharedLibrary: false\nsparseResources: true\nunknownFiles: {}\nusesFramework:\n  ids:\n  - 1\n  tag: null\nversion: 2.4.1\nversionInfo:\n  versionCode: '$SHORT_DATE'\n  versionName: $ALL_DATE"
+        local apktool_content="!!brut.androlib.meta.MetaInfo\napkFileName: $apk_name.apk\ncompressionType: false\ndoNotCompress:\n- resources.arsc\nisFrameworkApk: false\npackageInfo:\n  forcedPackageId: '127'\n  renameManifestPackage: null\nsdkInfo: null\nsharedLibrary: false\nsparseResources: true\nunknownFiles: {}\nusesFramework:\n  ids:\n  - 1\n  tag: null\nversion: 2.9.3\nversionInfo:\n  versionCode: '$SHORT_DATE'\n  versionName: $ALL_DATE"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
@@ -192,8 +240,6 @@ viet_hoa() {
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk  # >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
-        # $APKSIGNER_COMMAND sign --ks $BIN_DIR/apktool/Key/release.jks $vietnamese_dir/packed/$apk_name.apk
-
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
             rm -rf "$vietnamese_dir/$apk_name"
         else
