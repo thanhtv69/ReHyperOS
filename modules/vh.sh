@@ -161,7 +161,7 @@ viet_hoa() {
         ["MiuiExtraPhoto"]="com.miui.extraphoto"
         ["Provision"]="com.android.provision"
         ["Traceur"]="com.android.traceur"
-        ["Bluetooth"]="com.android.bluetooth"
+        # ["Bluetooth"]="com.android.bluetooth"
     )
     # for dir in "$vietnamese_master"/*/; do
     #     dirname=$(basename "$dir" .apk)
