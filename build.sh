@@ -74,8 +74,8 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    # viet_hoa
-    7za x $FILES_DIR/Overlay-24.06.07.zip  -o"$EXTRACTED_DIR/product/overlay/"  -aoa
+    viet_hoa
+    # 7za x $FILES_DIR/Overlay-24.06.07.zip  -o"$EXTRACTED_DIR/product/overlay/"  -aoa
     remove_bloatware
     add_google
     #==============================================
@@ -84,22 +84,22 @@ main() {
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 
-    decompile_smali "$framework"
-    decompile_smali "$services"
-    decompile_smali "$miui_framework"
-    decompile_smali "$miui_services"
+    # decompile_smali "$framework"
+    # decompile_smali "$services"
+    # decompile_smali "$miui_framework"
+    # decompile_smali "$miui_services"
 
-    framework_patcher
-    google_photo_cts
-    # changhuapeng_patch
+    # framework_patcher
+    # google_photo_cts
+    # # changhuapeng_patch
 
-    recompile_smali "$framework"
-    recompile_smali "$services"
-    recompile_smali "$miui_framework"
-    recompile_smali "$miui_services"
+    # recompile_smali "$framework"
+    # recompile_smali "$services"
+    # recompile_smali "$miui_framework"
+    # recompile_smali "$miui_services"
 
     modify
-    replace_package_install
+    # replace_package_install
     #==============================================
     repack_img_and_super
     generate_script
