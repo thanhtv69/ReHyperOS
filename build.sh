@@ -108,5 +108,5 @@ main() {
     end_build=$(date +%s)
     blue "END build in $((end_build - start_build)) seconds"
 }
-# main
+main
 
