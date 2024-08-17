@@ -44,74 +44,35 @@ jobs:
           sudo bash build.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}" "${{ github.event.inputs.CorePatch }}"
       - name: Upload ROM
         run: |
-          # Define the user agent
-          USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          echo "User Agent set to: $USER_AGENT"
-
           # Fetch the list of servers from the Gofile API
-          echo "Fetching list of servers..."
           servers=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[].name')
           if [[ $? -ne 0 || -z "$servers" ]]; then
-              echo "Error: Failed to fetch servers."
               exit 1
           fi
-          echo "Servers fetched: $servers"
 
-          # Initialize variables for tracking the best server and its ping time
-          best_server=""
-          best_time=999999
-          echo "Initialized best_server as: $best_server"
-          echo "Initialized best_time as: $best_time"
-
-          # Loop through each server to find the one with the lowest ping time
-          for server in $servers; do
-              echo "Pinging server: $server.gofile.io"
-              ping_output=$(ping -c 4 "$server.gofile.io" 2>&1)
-              if [[ $? -ne 0 ]]; then
-                  echo "Error: Ping failed for $server.gofile.io. Output: $ping_output"
-                  continue
-              fi
-              echo "Ping output for $server.gofile.io: $ping_output"
-              response_time=$(echo "$ping_output" | grep 'rtt' | awk -F'/' '{print $5}')
-              if [[ -z "$response_time" ]]; then
-                  echo "Error: Unable to parse response time."
-                  continue
-              fi
-              echo "Extracted response time: $response_time ms"
-
-              # Update the best server if this one has a lower ping time
-              if [[ $(echo "$response_time < $best_time" | bc) -eq 1 ]]; then
-                  best_time=$response_time
-                  best_server=$server
-                  echo "New best server: $best_server with ping time: $best_time ms"
-              fi
-          done
-
-          # Choose a default server if no suitable server was found
-          if [[ -z "$best_server" ]]; then
-              best_server="store$(( RANDOM % 8 + 1 ))"
-              echo "No suitable server found. Choosing default server: $best_server"
-          else
-              echo "Best server selected: $best_server"
+          # Check if there are any servers
+          if [[ -z "$servers" ]]; then
+              exit 1
           fi
 
-          # Upload the file to the best server
-          echo "Uploading file to: https://${best_server}.gofile.io/contents/uploadFile"
-          upload_response=$(curl -L -N -H "User-Agent: $USER_AGENT" -F "file=@${{ env.rom_path }}" "https://${best_server}.gofile.io/contents/uploadFile")
+          # Choose a random server from the list
+          server_array=($servers)
+          random_index=$(( RANDOM % ${#server_array[@]} ))
+          best_server=${server_array[$random_index]}
+
+          # Upload the file to the selected server
+          upload_response=$(curl -L -N -F "file=@${{ env.rom_path }}" "https://${best_server}.gofile.io/contents/uploadFile")
           if [[ $? -ne 0 ]]; then
-              echo "Error: Upload failed. Response: $upload_response"
               exit 1
           fi
+
           link_rom=$(echo "$upload_response" | jq -r .data.downloadPage)
           if [[ -z "$link_rom" || "$link_rom" == "null" ]]; then
-              echo "Error: Failed to get download link."
               exit 1
           fi
-          echo "File uploaded successfully. Download link: $link_rom"
 
           # Create or update the log file with details of the upload
           log_file="${GITHUB_WORKSPACE}/log.txt"
-          echo "Creating/updating log file: $log_file"
           touch "$log_file"
           chmod 777 "$log_file"
           {
@@ -122,13 +83,11 @@ jobs:
               echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"
               echo "- Note: ${{ github.event.inputs.Note }}"
           } >> "$log_file"
-          echo "Log file updated."
 
           # Set the version tag environment variable
           date=$(date +'%Y-%m-%d_%H-%M-%S')
-          echo "Setting V_TAG environment variable with value: ${{ env.device_name }}-${date}"
           echo "V_TAG=${{ env.device_name }}-${date}" >> $GITHUB_ENV
-          echo "V_TAG set in environment."
+
       - name: Upload GitHub Release
         uses: ncipollo/release-action@main
         with:
