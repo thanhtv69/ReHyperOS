@@ -161,7 +161,7 @@ viet_hoa() {
         ["MiuiExtraPhoto"]="com.miui.extraphoto"
         ["Provision"]="com.android.provision"
         ["Traceur"]="com.android.traceur"
-        # ["Bluetooth"]="com.android.bluetooth"
+        ["Bluetooth"]="com.android.bluetooth"
     )
     # for dir in "$vietnamese_master"/*/; do
     #     dirname=$(basename "$dir" .apk)
@@ -193,10 +193,10 @@ viet_hoa() {
     #     yellow "Add $dirname with $package_name to list Overlay"
     # done
 
-    # strings_file=$vietnamese_master/*/res/values-vi/strings.xml
-    # green "Remove CopyRight"
-    # sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
-    # sed -i 's/MIUI.VN/Open Source/g' $strings_file
+    strings_file=$vietnamese_master/*/res/values-vi/strings.xml
+    green "Remove CopyRight"
+    sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
+    sed -i 's/MIUI.VN/Open Source/g' $strings_file
 
     green "Add Lunarian Calendar"
     sed -i \
@@ -227,7 +227,7 @@ viet_hoa() {
         mkdir -p "$vietnamese_dir/$apk_name/res/values-vi"
         touch "$vietnamese_dir/$apk_name/apktool.yml"
 
-        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"$SHORT_DATE\"\n    android:versionName=\"$ALL_DATE\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"1.0-$SHORT_DATE\"\n    package=\"vn.overlay.$package_name\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n    <overlay\n        android:priority=\"999\"\n        android:targetPackage=\"$package_name\"\n        android:isStatic=\"true\"/>\n</manifest>"
+        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"$SHORT_DATE\"\n    android:versionName=\"$ALL_DATE\"\n    android:compileSdkVersion=\"23\"\n    android:compileSdkVersionCodename=\"1.0-$SHORT_DATE\"\n    package=\"overlay.$package_name\"\n    platformBuildVersionCode=\"$SHORT_DATE\"\n    platformBuildVersionName=\"$ALL_DATE\">\n    <overlay\n        android:priority=\"999\"\n        android:targetPackage=\"$package_name\"\n        android:isStatic=\"true\"/>\n</manifest>"
         local apktool_content="!!brut.androlib.meta.MetaInfo\napkFileName: $apk_name.apk\ncompressionType: false\ndoNotCompress:\n- resources.arsc\nisFrameworkApk: false\npackageInfo:\n  forcedPackageId: '127'\n  renameManifestPackage: null\nsdkInfo: null\nsharedLibrary: false\nsparseResources: true\nunknownFiles: {}\nusesFramework:\n  ids:\n  - 1\n  tag: null\nversion: 2.9.3\nversionInfo:\n  versionCode: '$SHORT_DATE'\n  versionName: $ALL_DATE"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
