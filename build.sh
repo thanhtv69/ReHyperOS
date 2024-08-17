@@ -74,8 +74,8 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    viet_hoa
-    # 7za x $FILES_DIR/Overlay-24.06.07.zip  -o"$EXTRACTED_DIR/product/overlay/"  -aoa
+    # viet_hoa
+    7za x $FILES_DIR/Overlay-24.06.07.zip  -o"$EXTRACTED_DIR/product/overlay/"  -aoa
     remove_bloatware
     add_google
     #==============================================
