@@ -17,7 +17,7 @@ EXTRACTED_DIR=$OUT_DIR/extracted
 READY_DIR=$OUT_DIR/ready_flash
 APKTOOL_COMMAND="java -jar $BIN_DIR/apktool/apktool.jar"
 APKEDITTOR_COMMAND="java -jar $BIN_DIR/apktool/APKEditor-1.3.9.jar"
-APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner1.jar"
+APKSIGNER_COMMAND="java -jar $BIN_DIR/apktool/apksigner.jar"
 BAKSMALI_COMMAND="java -jar $BIN_DIR/apktool/baksmali.jar"
 SMALI_COMMAND="java -jar $BIN_DIR/apktool/smali.jar"
 
@@ -74,7 +74,7 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    viet_hoa
+    viet_hoa2
     # 7za x $FILES_DIR/Overlay-24.06.07.zip  -o"$EXTRACTED_DIR/product/overlay/"  -aoa
     remove_bloatware
     add_google
@@ -109,4 +109,5 @@ main() {
     blue "END build in $((end_build - start_build)) seconds"
 }
 main
+
 

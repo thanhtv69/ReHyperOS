@@ -248,12 +248,80 @@ viet_hoa() {
         fi
     done
 
-    # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
-    find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
+    cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
+    # find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
 
     rm -rf "$vietnamese_dir"
     cd "$PROJECT_DIR"
 
     end_time=$(date +%s)
     blue "END Add Vietnamese and Lunar calendar in $(($end_time - $start_time))s"
+}
+
+viet_hoa2() {
+    local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
+    local vietnamese_dir="$OUT_DIR/vn"
+    local vietnamese_master="$vietnamese_dir/MIUI-14-XML-Vietnamese-master/Vietnamese/main"
+
+    mkdir -p "$vietnamese_dir/packed"
+    cd "$vietnamese_dir"
+
+    # Tải file ZIP từ URL và lưu với tên đã chỉ định
+    curl --location --remote-name --max-time 20 "$url" || cp -f $FILES_DIR/MIUI-14-XML-Vietnamese-master.zip $vietnamese_dir/master.zip
+    7za x master.zip -aoa
+    rm -f master.zip
+
+    strings_file=$vietnamese_master/*/res/values-vi/strings.xml
+    green "Remove CopyRight"
+    sed -i 's/๖ۣۜßεℓ/Community/g' $strings_file
+    sed -i 's/MIUI.VN/Open Source/g' $strings_file
+
+    green "Add Lunarian Calendar"
+    sed -i \
+        -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
+        -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+        -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
+        -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
+        -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
+        $strings_file
+
+    green "Edit Date Format"
+    sed -i -E '/<string name="chinese_day_[0-9]">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
+
+    green "Edit Month Format"
+    sed -i -E '/<string name="chinese_month_.*">[1-9]<\/string>/s/([1-9])<\/string>/0\1<\/string>/g' $strings_file
+
+    7za x $FILES_DIR/Overlay-24.06.07.zip -o"$vietnamese_dir/old/" -aoa
+    for file in "$vietnamese_dir/old"/*.apk; do
+        if [ -f "$file" ]; then
+            # local apk_name=$(basename "$file")
+            local apk_name=$(basename "$file" .apk)
+
+            $APKTOOL_COMMAND d i $file -o$vietnamese_dir/$apk_name
+
+            find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp -f {} "$vietnamese_dir/$apk_name/res/values-vi" \;
+
+            generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
+
+            $APKTOOL_COMMAND b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk # >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
+            zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk  # >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
+            rm -rf $vietnamese_dir/${apk_name}_tmp.apk
+            $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
+            if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
+                rm -rf "$vietnamese_dir/$apk_name"
+            else
+                error "ERROR: Create overlay $apk_name.apk failed"
+                exit 1
+            fi
+        fi
+    done
+
+    # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
+    find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
+
+    rm -rf "$vietnamese_dir"
+    cd "$PROJECT_DIR"
 }
