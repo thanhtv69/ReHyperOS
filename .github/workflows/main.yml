@@ -44,56 +44,63 @@ jobs:
           sudo bash build.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}" "${{ github.event.inputs.CorePatch }}"
       - name: Upload ROM
         run: |
-          User="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-
-          # Get the list of servers from Gofile API
+          # Define the user agent
+          USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      
+          # Fetch the list of servers from the Gofile API
           servers=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[].name')
-
-          # Define a variable to keep track of the best server
+          echo $servers
+          
+          # Initialize variables for tracking the best server and its ping time
           best_server=""
           best_time=999999
-
+      
           # Loop through each server to find the one with the lowest ping time
           for server in $servers; do
               # Ping the server and get the average response time
               output=$(ping -c 4 "$server.gofile.io")
               response_time=$(echo "$output" | grep 'rtt' | awk -F'/' '{print $5}')
               echo "Server: ${server}.gofile.io - Ping Time: ${response_time} ms"
-              # If response time is not empty and less than the best time found so far, update best server
+      
+              # Update the best server if this one has a lower ping time
               if [[ ! -z "$response_time" && $(echo "$response_time < $best_time" | bc) -eq 1 ]]; then
                   best_time=$response_time
                   best_server=$server
               fi
           done
-
-          # If no best server found, choose a default server
+      
+          # Choose a default server if no suitable server was found
           if [[ -z "$best_server" ]]; then
-              best_server="store$(( $RANDOM % 8 + 1 ))"
+              best_server="store$(( RANDOM % 8 + 1 ))"
           fi
-
+      
           # Upload the file to the best server
-          Linkrom=$(curl -L -N -H "$User" -F "file=@${{ env.rom_path }}" "https://${best_server}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)
-          
-          # Kiểm tra lỗi và thoát nếu có lỗi
-          if [ -z "$Linkrom" ] || [[ "$Linkrom" == "null" ]]; then
-            echo "Error: Failed to get download link."
-            exit 1
+          link_rom=$(curl -L -N -H "User-Agent: $USER_AGENT" -F "file=@${{ env.rom_path }}" "https://${best_server}.gofile.io/contents/uploadFile" | jq -r .data.downloadPage)
+      
+          # Check for errors and exit if the upload failed
+          if [[ -z "$link_rom" || "$link_rom" == "null" ]]; then
+              echo "Error: Failed to get download link."
+              exit 1
           fi
-          echo "File uploaded. Download link: $Linkrom"
-
-          touch "${GITHUB_WORKSPACE}/log.txt"
-          chmod 777 "${GITHUB_WORKSPACE}/log.txt"
+      
+          echo "File uploaded. Download link: $link_rom"
+      
+          # Create or update the log file with details of the upload
+          log_file="${GITHUB_WORKSPACE}/log.txt"
+          touch "$log_file"
+          chmod 777 "$log_file"
           {
-            echo "- Official ROM: ${{ github.event.inputs.URL }}"
-            echo "- ReHyper ROM: $Linkrom"
-            echo "- MD5: ${{ env.rom_md5 }}"
-            echo "- Core patch: ${{ github.event.inputs.CorePatch }}"
-            echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"
-            echo "- Note: ${{ github.event.inputs.Note }}"
-          } >> "${GITHUB_WORKSPACE}/log.txt"
-
+              echo "- Official ROM: ${{ github.event.inputs.URL }}"
+              echo "- ReHyper ROM: $link_rom"
+              echo "- MD5: ${{ env.rom_md5 }}"
+              echo "- Core patch: ${{ github.event.inputs.CorePatch }}"
+              echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"
+              echo "- Note: ${{ github.event.inputs.Note }}"
+          } >> "$log_file"
+      
+          # Set the version tag environment variable
           date=$(date +'%Y-%m-%d_%H-%M-%S')
-          echo "V_TAG=${{env.device_name}}-${date}" >> $GITHUB_ENV
+          echo "V_TAG=${{ env.device_name }}-${date}" >> $GITHUB_ENV
       - name: Upload GitHub Release
         uses: ncipollo/release-action@main
         with:
