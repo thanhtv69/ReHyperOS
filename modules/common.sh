@@ -62,7 +62,7 @@ remove_bloatware() {
 add_google() {
     blue "========================================="
     blue "START Add Google Play Store, Gboard"
-    cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
+    sudo cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
     blue "END Add Google Play Store, Gboard"
 }
 

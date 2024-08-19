@@ -49,15 +49,15 @@ source modules/common.sh
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
     vendor_build_prop="$EXTRACTED_DIR/vendor/build.prop"
-
+    
     # Đọc thông tin sdk_version
     sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
     green "- SDK Version: $sdk_version"
-
+    
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
     green "- Device: $device"
-
+    
     # Đọc thông tin version_release
     version_release=$(grep -w ro.product.build.version.release "$product_build_prop" | cut -d"=" -f2)
     green "- Version Release: $version_release"
@@ -67,7 +67,7 @@ main() {
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
-
+    
     blue "========================================="
     blue "START build"
     start_build=$(date +%s)
@@ -84,31 +84,29 @@ main() {
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
-
+    
     decompile_smali "$framework"
     # decompile_smali "$services"
     # decompile_smali "$miui_framework"
     # decompile_smali "$miui_services"
-
+    
     # framework_patcher
     google_photo_cts
     changhuapeng_patch
-
+    
     recompile_smali "$framework"
     # recompile_smali "$services"
     # recompile_smali "$miui_framework"
     # recompile_smali "$miui_services"
-
+    
     modify
     replace_package_install
     #==============================================
     repack_img_and_super
     generate_script
     zip_rom
-
+    
     end_build=$(date +%s)
     blue "END build in $((end_build - start_build)) seconds"
 }
 main
-
-

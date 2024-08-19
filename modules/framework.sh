@@ -5,11 +5,11 @@ framework_patcher() {
     cd $OUT_DIR
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
-
+    
     curl --location --remote-name --max-time 30 "$url" || cp -f $FILES_DIR/FrameworkPatcher-main.zip $OUT_DIR/master.zip
     7za x master.zip -aoa
     rm -rf master.zip
-
+    
     green "Moving framework/classes to classes..."
     mv -f "$OUT_DIR/tmp/framework/classes" "$framework_patcher/classes"
     green "Moving framework/classes2 to classes2..."
@@ -30,7 +30,7 @@ framework_patcher() {
     mv -f "$OUT_DIR/tmp/miui-framework/classes" "$framework_patcher/miui_framework_classes"
     green "Moving miui-services/classes to miui_services_classes..."
     mv -f "$OUT_DIR/tmp/miui-services/classes" "$framework_patcher/miui_services_classes"
-
+    
     cd $framework_patcher
     if [[ "$core_patch" == true ]]; then
         yellow "Core patching"
@@ -43,9 +43,9 @@ framework_patcher() {
     fi
     python3 "miui-framework_patch.py"
     python3 "miui-service_Patch.py"
-
+    
     cp -rf "$framework_patcher/magisk_module/system/." $EXTRACTED_DIR
-
+    
     green "Moving classes to framework..."
     mv -f "$framework_patcher/classes" "$OUT_DIR/tmp/framework/classes"
     green "Moving classes2 to framework..."
@@ -66,7 +66,7 @@ framework_patcher() {
     mv -f "$framework_patcher/miui_framework_classes" "$OUT_DIR/tmp/miui-framework/classes"
     green "Moving miui_services_classes to miui-services..."
     mv -f "$framework_patcher/miui_services_classes" "$OUT_DIR/tmp/miui-services/classes"
-
+    
     cd $PROJECT_DIR
     rm -rf $framework_patcher
     end_time=$(date +%s)
@@ -110,46 +110,59 @@ framework_patcher() {
 google_photo_cts() {
     blue "========================================="
     blue "START Modding google photos"
-
+    
     # python3 "${FILES_DIR}/gg_cts/update_device.py" || yellow "Update device fail!"
-
+    
     local target_folder="${OUT_DIR}/tmp/framework"
     local application_smali="$target_folder/classes/android/app/Application.smali"
     local application_stub_smali="$target_folder/classes/android/app/ApplicationStub.smali"
-
+    
     sed -i '/^.method public onCreate/,/^.end method/{//!d}' "$application_smali"
     sed -i -e '/^.method public onCreate/a\    .registers 1\n    invoke-static {p0}, Landroid/app/ApplicationStub;->onCreate(Landroid/app/Application;)V\n    return-void' "$application_smali"
-
+    
     if [ ! -f "$application_stub_smali" ]; then
         error "File $application_stub_smali does not exist. Please update guide for Google Photos"
         exit 1
     fi
-
+    
     cp -f "${FILES_DIR}/gg_cts/ApplicationStub.smali" "$application_stub_smali"
     cp -f "${FILES_DIR}/gg_cts/nexus.xml" "$EXTRACTED_DIR/system/system/etc/sysconfig"
-
+    
     blue "END Modding google photos"
 }
 
 download_changhuapeng_classes() {
     local output_file="$1"
+    local specified_file="$2"
     local repo_api="https://api.github.com/repos/thanhtv69/FukkFramework/releases/latest"
-
+    
     # Xóa tệp đầu ra nếu đã tồn tại
     [ -f "$output_file" ] && rm "$output_file"
-
+    
     # Lấy URL tải về tất cả các tệp .dex
     local file_urls
-    file_urls=$(curl -s "$repo_api" | jq -r '.assets[] | select(.name | endswith(".dex")) | .browser_download_url')
-
+    file_urls=$(curl -k -s "$repo_api" | jq -r '.assets[] | select(.name | endswith(".dex")) | .browser_download_url')
+    
     # Kiểm tra nếu có ít nhất một URL
     if [ -n "$file_urls" ]; then
-        # Chọn một URL ngẫu nhiên từ danh sách
         local file_url
-        file_url=$(echo "$file_urls" | shuf -n 1)
-
+        
+        if [ -n "$specified_file" ]; then
+            # Nếu đã chỉ định tên file, chọn URL chứa tên file đó
+            file_url=$(echo "$file_urls" | grep "$specified_file")
+            if [ -z "$file_url" ]; then
+                echo "Không tìm thấy URL tải cho tệp $specified_file"
+                return 1
+            fi
+        else
+            # Nếu không chỉ định, chọn URL ngẫu nhiên từ danh sách
+            file_url=$(echo "$file_urls" | shuf -n 1)
+        fi
+        
+        yellow "$file_url"
+        
         # Tải xuống tệp .dex từ URL đã chọn và kiểm tra sự thành công
-        curl -L -o "$output_file" "$file_url"
+        curl -k -L -o "$output_file" "$file_url"
         if [ $? -eq 0 ]; then
             echo "Tệp đã được tải về $output_file"
         else
@@ -162,17 +175,18 @@ download_changhuapeng_classes() {
     fi
 }
 
+
 changhuapeng_patch() {
     blue "========================================="
     blue "START Patching changhuapeng"
-
+    
     dex_count=$(find "$OUT_DIR/tmp/framework" -name "*.dex" | wc -l)
     next_dex_index=$((dex_count + 1))
     new_dex_name="classes${next_dex_index}.dex"
     download_changhuapeng_classes "$OUT_DIR/tmp/framework/$new_dex_name" || cp -f "${FILES_DIR}/gg_cts/classes.dex" "$OUT_DIR/tmp/framework/$new_dex_name"
     7za a -y -mx0 -tzip "$OUT_DIR/tmp/framework/framework.jar" "$OUT_DIR/tmp/framework/$new_dex_name" >/dev/null 2>&1 || error "Failed to zip $new_dex_name"
     rm "$OUT_DIR/tmp/framework/$new_dex_name"
-
+    
     # AndroidKeyStoreSpi-------------------------------------------------------------------------------------
     AndroidKeyStoreSpi="$OUT_DIR/tmp/framework/classes3/android/security/keystore2/AndroidKeyStoreSpi.smali"
     method_body=$(sed -n '/.method public engineGetCertificateChain/,/.end method/p' "$AndroidKeyStoreSpi")
@@ -193,7 +207,7 @@ changhuapeng_patch() {
     ${new_code}
     }" "$AndroidKeyStoreSpi"
     green "Updated AndroidKeyStoreSpi.smali"
-
+    
     # Instrumentation-----------------------------------------------------------------------------
     Instrumentation="$OUT_DIR/tmp/framework/classes/android/app/Instrumentation.smali"
     context_register=$(grep -A 10 '.method public static newApplication' "$Instrumentation" | grep -oP '(?<=.param )\w+(?=, "context")')
@@ -209,13 +223,13 @@ changhuapeng_patch() {
         }
     }" "$Instrumentation"
     green "Updated Instrumentation.smali - public static newApplication1"
-
+    
     context_register=$(grep -A 10 '.method public newApplication' "$Instrumentation" | grep -oP '(?<=.param )\w+(?=, "context")')
     if [ -z "$context_register" ]; then
         error "No context register found in $Instrumentation"
         exit 1
     fi
-
+    
     new_code="invoke-static {$context_register}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V"
     sed -i "/.method public newApplication/,/.end method/ {
         /return-object/ {
@@ -224,7 +238,7 @@ changhuapeng_patch() {
         }
     }" "$Instrumentation"
     green "Updated Instrumentation.smali - public newApplication"
-
+    
     # ApplicationPackageManager----------------------------------------------------------------------
     ApplicationPackageManager="$OUT_DIR/tmp/framework/classes/android/app/ApplicationPackageManager.smali"
     if [ ! -f "$ApplicationPackageManager" ]; then
@@ -234,13 +248,13 @@ changhuapeng_patch() {
     sed -i '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/,/^.end method/{//!d}' "$ApplicationPackageManager"
     sed -i -e '/^.method public hasSystemFeature(Ljava\/lang\/String;)Z/a\    .registers 3\n    .param p1, "name"    # Ljava/lang/String;\n\n    .line 768\n    const/4 v0, 0x0\n\n    invoke-virtual {p0, p1, v0}, Landroid/app/ApplicationPackageManager;->hasSystemFeature(Ljava/lang/String;I)Z\n\n    move-result v0\n\n    invoke-static {v0, p1}, Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z\n\n    move-result v0\n\n    return v0' "$ApplicationPackageManager"
     green "Updated ApplicationPackageManager.smali"
-
+    
     # Very important! Remove all "boot-framework.*" files!
-
+    
     find "$EXTRACTED_DIR/system/system/framework/" -type f -name "boot-framework.*" -exec rm {} +
-
+    
     rm -f "$EXTRACTED_DIR/system/system/framework/arm/boot-framework.vdex"
     rm -f "$EXTRACTED_DIR/system/system/framework/arm64/boot-framework.vdex"
-
+    
     blue "END Patching changhuapeng"
 }
