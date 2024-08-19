@@ -231,6 +231,10 @@ vietnamize() {
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
 
+        if [ ! -d "$vietnamese_master/$apk_name.apk/res/values-vi"]; then
+            yellow "WARNING: $vietnamese_master/$apk_name.apk/res/values-vi doesn't exist"
+            continue
+        fi
         find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp {} "$vietnamese_dir/$apk_name/res/values-vi" \;
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
