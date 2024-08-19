@@ -305,9 +305,11 @@ vietnamize2() {
 
             $APK_TOOL d i $file -o$vietnamese_dir/$apk_name >/dev/null 2>&1 || error "ERROR: Decompile overlay $apk_name.apk failed"
 
-            find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp -f {} "$vietnamese_dir/$apk_name/res/values-vi" \;
+            if [ -d "$vietnamese_master/$apk_name.apk/res/values-vi"]; then
+                find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp -f {} "$vietnamese_dir/$apk_name/res/values-vi" \;
 
-            generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
+                generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
+            fi
 
             $APK_TOOL b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
             zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
