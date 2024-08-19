@@ -27,6 +27,7 @@ export PATH="$BIN_DIR:$PATH"
 
 EXTRACT_LIST=('product' 'system' 'system_ext' 'vendor')
 SUPER_LIST=('mi_ext' 'odm' 'product' 'system' 'system_dlkm' 'system_ext' 'vendor' 'vendor_dlkm' 'odm_dlkm')
+EXT4_LIST=('product' 'system' 'system_ext')
 super_size=9126805504
 build_type="erofs" # erofs/ext4
 sdk_version="34"
