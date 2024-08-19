@@ -44,7 +44,7 @@ max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 source modules/framework.sh
 source modules/packing.sh
 source modules/smali.sh
-source modules/vh.sh
+source modules/vietnamize.sh
 source modules/common.sh
 
 read_info() {
@@ -77,7 +77,7 @@ main() {
     read_info
     disable_avb_and_dm_verity
     # viet_hoa2
-    viet_hoa
+    vietnamize
     # 7za x $FILES_DIR/Overlay-24.06.07.zip  -o"$EXTRACTED_DIR/product/overlay/"  -aoa
     remove_bloatware
     add_google

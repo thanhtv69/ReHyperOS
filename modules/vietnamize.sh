@@ -89,7 +89,7 @@ generate_public_xml() {
     echo "Creation of $output_file completed!"
 }
 
-viet_hoa() {
+vietnamize() {
     blue "========================================="
     blue "START Add Vietnamese and Lunar Calendar"
     start_time=$(date +%s)
