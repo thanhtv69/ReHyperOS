@@ -80,6 +80,23 @@ repack_img_and_super() {
         mkdir -p "$READY_DIR/images"
     fi
 
+    for fstab in $(find $EXTRACTED_DIR/*/ -type f -name "fstab.*"); do
+        if [[ "$build_type" == "ext4" ]]; then
+            sed -i '/^overlay/ s/^/# /' "$fstab"
+            sed -i '/^system .* erofs/ s/^/# /' "$fstab"
+            sed -i '/^system_ext .* erofs/ s/^/# /' "$fstab"
+            sed -i '/^vendor .* erofs/ s/^/# /' "$fstab"
+            sed -i '/^product .* erofs/ s/^/# /' "$fstab"
+        else
+            sed -i '/^# overlay/ s/^# //' "$fstab"
+            sed -i '/^# system .* erofs/ s/^# //' "$fstab"
+            sed -i '/^# system_ext .* erofs/ s/^# //' "$fstab"
+            sed -i '/^# vendor .* erofs/ s/^# //' "$fstab"
+            sed -i '/^# product .* erofs/ s/^# //' "$fstab"
+        fi
+    done
+    
+
     for partition in "${EXTRACT_LIST[@]}"; do
         green "Repack $partition.img"
         start=$(date +%s)
@@ -92,8 +109,17 @@ repack_img_and_super() {
         python3 "$BIN_DIR/fspatch.py" "$input_folder_image" "$fs_config_file" >/dev/null 2>&1
         python3 "$BIN_DIR/contextpatch.py" "$input_folder_image" "$file_contexts_file" >/dev/null 2>&1
 
-        mkfs.erofs --quiet -zlz4hc --workers=$max_threads -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
-
+        if [[ "$build_type" == "ext4" && " ${EXT4_LIST[*]} " == *" $partition "* ]]; then
+            
+            this_size=$(du -sb $EXTRACTED_DIR/${partition} |tr -cd 0-9)
+            green "Original Size: $(echo "scale=2; $this_size / 1048576" | bc) MB"
+            this_size=$(echo "scale=2; $this_size * 1.2" | bc)
+            green "New Size (+20%): $(echo "scale=2; $this_size / 1048576" | bc) MB"
+            make_ext4fs -J -T 1230768000 -S $file_contexts_file -l $this_size -C $fs_config_file -L $partition -a $partition $output_image $input_folder_image
+        else
+            mkfs.erofs --quiet -zlz4hc --workers=$max_threads -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
+        fi
+        
         if [ ! -f "$output_image" ]; then
             error "Mkfs erofs $partition failed"
             exit 1
@@ -182,7 +208,7 @@ zip_rom() {
     7za -tzip a miui.zip bin/* images/* FlashROM.bat "$log_file_name" -y
     cd "$PROJECT_DIR"
     local md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
-    local rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0.zip"
+    local rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}._[${build_type}].zip"
     local rom_path="$READY_DIR/$rom_name"
     mv "$READY_DIR/miui.zip" "$rom_path"
 
