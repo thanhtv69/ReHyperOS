@@ -105,63 +105,62 @@ vietnamize() {
     7za x master.zip -aoa
     rm -f master.zip
     declare -A BUILD_APK_LIST=(
+        ["AICallAssistant"]="com.xiaomi.aiasst.service"
         ["AuthManager"]="com.lbe.security.miui"
         ["Calendar"]="com.android.calendar"
+        ["CalendarProvider"]="com.android.providers.calendar"
         ["Cit"]="com.miui.cit"
         ["CleanMaster"]="com.miui.cleanmaster"
         ["CloudBackup"]="com.miui.cloudbackup"
         ["CloudService"]="com.miui.cloudservice"
         ["Contacts"]="com.android.contacts"
+        ["ContactsProvider"]="com.android.providers.contacts"
+        ["DownloadProvider"]="com.android.providers.downloads"
+        ["DownloadProviderUi"]="com.android.providers.downloads.ui"
+        ["GalleryEditor"]="com.miui.mediaeditor"
         ["InCallUI"]="com.android.incallui"
+        ["MiAI"]="com.miui.voiceassist"
+        ["MiAITranslate"]="com.xiaomi.aiasst.vision"
         ["MiCloudSync"]="com.miui.micloudsync"
         ["MiGalleryLockscreen"]="com.mfashiongallery.emag"
+        ["MiLinkService"]="com.milink.service"
         ["MiMover"]="com.miui.huanji"
         ["MiSettings"]="com.xiaomi.misettings"
         ["MiShare"]="com.miui.mishare.connectivity"
+        ["MiuiAod"]="com.miui.aod"
+        ["MiuiBluetooth"]="com.xiaomi.bluetooth"
+        ["MiuiCamera"]="com.android.camera"
         ["MiuiContentCatcher"]="com.miui.contentcatcher"
+        ["MiuiExtraPhoto"]="com.miui.extraphoto"
         ["MiuiFreeformService"]="com.miui.freeform"
+        ["MiuiFrequentPhrase"]="com.miui.phrase"
         ["MiuiGallery"]="com.miui.gallery"
         ["MiuiHome"]="com.miui.home"
         ["MiuiPackageInstaller"]="com.miui.packageinstaller"
         ["MiuiSystemUI"]="com.android.systemui"
+        ["MiuixEditor"]="com.miuix.editor"
         ["Mms"]="com.android.mms"
+        ["NQNfcNci"]="com.android.nfc"
+        ["PermissionController"]="com.android.permissioncontroller"
         ["PersonalAssistant"]="com.miui.personalassistant"
         ["PowerKeeper"]="com.miui.powerkeeper"
+        ["Provision"]="com.android.provision"
         ["SecurityAdd"]="com.miui.securityadd"
         ["SecurityCenter"]="com.miui.securitycenter"
         ["Settings"]="com.android.settings"
+        ["SmartCards"]="com.miui.tsmclient"
+        ["Taplus"]="com.miui.contentextension"
         ["TeleService"]="com.android.phone"
+        ["Telecom"]="com.android.server.telecom"
+        ["TelephonyProvider"]="com.android.providers.telephony"
         ["ThemeManager"]="com.android.thememanager"
+        ["Traceur"]="com.android.traceur"
+        ["VpnDialogs"]="com.android.vpndialogs"
         ["Weather"]="com.miui.weather2"
         ["XiaomiAccount"]="com.xiaomi.account"
         ["XiaomiSimActivateService"]="com.xiaomi.simactivate.service"
         ["com.xiaomi.macro"]="com.xiaomi.macro"
-        ["MiLinkService"]="com.milink.service"
         ["framework-res"]="android"
-        ["NQNfcNci"]="com.android.nfc"
-        ["MiuiBluetooth"]="com.xiaomi.bluetooth"
-        ["AICallAssistant"]="com.xiaomi.aiasst.service"
-        ["GalleryEditor"]="com.miui.mediaeditor"
-        ["MiAI"]="com.miui.voiceassist"
-        ["MiAITranslate"]="com.xiaomi.aiasst.vision"
-        ["SmartCards"]="com.miui.tsmclient"
-        ["Taplus"]="com.miui.contentextension"
-        ["ContactsProvider"]="com.android.providers.contacts"
-        ["TelephonyProvider"]="com.android.providers.telephony"
-        ["CalendarProvider"]="com.android.providers.calendar"
-        ["Telecom"]="com.android.server.telecom"
-        ["MiuiAod"]="com.miui.aod"
-        ["MiuiCamera"]="com.android.camera"
-        ["MiuiFrequentPhrase"]="com.miui.phrase"
-        ["MiuixEditor"]="com.miuix.editor"
-        ["DownloadProvider"]="com.android.providers.downloads"
-        ["DownloadProviderUi"]="com.android.providers.downloads.ui"
-        ["PermissionController"]="com.android.permissioncontroller"
-        ["VpnDialogs"]="com.android.vpndialogs"
-        ["MiuiExtraPhoto"]="com.miui.extraphoto"
-        ["Provision"]="com.android.provision"
-        ["Traceur"]="com.android.traceur"
-        ["Bluetooth"]="com.android.bluetooth"
     )
     # for dir in "$vietnamese_master"/*/; do
     #     dirname=$(basename "$dir" .apk)
@@ -236,8 +235,8 @@ vietnamize() {
 
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
 
-        $APK_TOOL b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk # >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
-        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk  # >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
+        $APK_TOOL b -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
+        zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
         rm -rf $vietnamese_dir/${apk_name}_tmp.apk
         $APKSIGNER_COMMAND sign --key $BIN_DIR/apktool/Key/testkey.pk8 --cert $BIN_DIR/apktool/Key/testkey.x509.pem $vietnamese_dir/packed/$apk_name.apk # >/dev/null 2>&1 || error "ERROR: Sign overlay $apk_name.apk failed"
         if [ -f "$vietnamese_dir/packed/$apk_name.apk" ]; then
@@ -248,8 +247,8 @@ vietnamize() {
         fi
     done
 
-    cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
-    # find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
+    # cp -rf "$vietnamese_dir/packed/." "$EXTRACTED_DIR/product/overlay/"
+    find "$vietnamese_dir/packed/" -name "*.apk" -exec cp -rf {} "$EXTRACTED_DIR/product/overlay/" \;
 
     rm -rf "$vietnamese_dir"
     cd "$PROJECT_DIR"
@@ -258,7 +257,7 @@ vietnamize() {
     blue "END Add Vietnamese and Lunar calendar in $(($end_time - $start_time))s"
 }
 
-viet_hoa2() {
+vietnamize2() {
     local url="https://github.com/butinhi/MIUI-14-XML-Vietnamese/archive/refs/heads/master.zip"
     local vietnamese_dir="$OUT_DIR/vn"
     local vietnamese_master="$vietnamese_dir/MIUI-14-XML-Vietnamese-master/Vietnamese/main"
