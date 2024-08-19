@@ -305,9 +305,8 @@ vietnamize2() {
 
             $APK_TOOL d i $file -o$vietnamese_dir/$apk_name >/dev/null 2>&1 || error "ERROR: Decompile overlay $apk_name.apk failed"
 
-            if [ -d "$vietnamese_master/$apk_name.apk/res/values-vi"]; then
+            if [ -d "$vietnamese_master/$apk_name.apk/res/values-vi" ]; then
                 find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp -f {} "$vietnamese_dir/$apk_name/res/values-vi" \;
-
                 generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
             fi
 
