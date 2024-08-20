@@ -159,7 +159,7 @@ vietnamize() {
         ["Weather"]="com.miui.weather2"
         ["XiaomiAccount"]="com.xiaomi.account"
         ["XiaomiSimActivateService"]="com.xiaomi.simactivate.service"
-        ["com.xiaomi.macro"]="com.xiaomi.macro"
+        ["MiuiMacro"]="com.xiaomi.macro"
         ["framework-res"]="android"
     )
     # for dir in "$vietnamese_master"/*/; do
