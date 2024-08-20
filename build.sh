@@ -89,18 +89,18 @@ main() {
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
 
     decompile_smali "$framework"
-    # decompile_smali "$services"
-    # decompile_smali "$miui_framework"
-    # decompile_smali "$miui_services"
+    decompile_smali "$services"
+    decompile_smali "$miui_framework"
+    decompile_smali "$miui_services"
 
-    # framework_patcher
-    # google_photo_cts
-    changhuapeng_patch
+    framework_patcher
+    google_photo_cts
+    # changhuapeng_patch
 
     recompile_smali "$framework"
-    # recompile_smali "$services"
-    # recompile_smali "$miui_framework"
-    # recompile_smali "$miui_services"
+    recompile_smali "$services"
+    recompile_smali "$miui_framework"
+    recompile_smali "$miui_services"
 
     modify
     replace_package_install
