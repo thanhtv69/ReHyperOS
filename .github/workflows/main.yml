@@ -79,6 +79,7 @@ jobs:
           if [[ -z "$link_rom" || "$link_rom" == "null" ]]; then
               exit 1
           fi
+          echo "Link Download: $link_rom"
 
           # Create or update the log file with details of the upload
           log_file="${GITHUB_WORKSPACE}/log.txt"
