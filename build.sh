@@ -1,6 +1,8 @@
 #!/bin/bash
 URL="${1:-"https://bn.d.miui.com/OS1.0.22.0.UMLCNXM/miui_COROT_OS1.0.22.0.UMLCNXM_7b539d7cbd_14.0.zip"}"
 GITHUB_ENV="$2"
+core_patch=${3:-true}
+build_type="${4:-"erofs"}" # erofs/ext4
 
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
 sudo chmod 777 -R ./bin/*
@@ -29,11 +31,9 @@ export PATH="$BIN_DIR:$PATH"
 EXTRACT_LIST=('product' 'system' 'system_ext' 'vendor')
 SUPER_LIST=('mi_ext' 'odm' 'product' 'system' 'system_dlkm' 'system_ext' 'vendor' 'vendor_dlkm' 'odm_dlkm')
 EXT4_LIST=('product' 'system' 'system_ext')
-super_size=9126805504
-build_type="erofs" # erofs/ext4
+# super_size=9126805504
 sdk_version="34"
 version_release=14
-core_patch=${3:-true}
 
 zip_name=$(echo ${URL} | cut -d"/" -f5)
 os_version=$(echo ${URL} | cut -d"/" -f4)

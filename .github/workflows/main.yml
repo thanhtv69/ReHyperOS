@@ -15,6 +15,14 @@ on:
           - "true"
           - "false"
         default: "true"
+      BuildType:
+        description: "Build type"
+        required: false
+        type: choice
+        options:
+          - "erofs"
+          - "ext4"
+        default: "erofs"
       Note:
         description: "Ghi chú"
         default: ""
@@ -42,7 +50,7 @@ jobs:
           sudo bash setup.sh
       - name: Build
         run: |
-          sudo bash build.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}" "${{ github.event.inputs.CorePatch }}"
+          sudo bash build.sh "${{ github.event.inputs.URL }}" "${GITHUB_ENV}" "${{ github.event.inputs.CorePatch }}" "${{ github.event.inputs.BuildType }}"
       - name: Upload ROM
         run: |
           # Fetch the list of servers from the Gofile API
@@ -79,6 +87,7 @@ jobs:
           {
               echo "- Official ROM: ${{ github.event.inputs.URL }}"
               echo "- ReHyper ROM: $link_rom"
+              echo "- BuildType: ${{ github.event.inputs.BuildType }}"
               echo "- MD5: ${{ env.rom_md5 }}"
               echo "- Core patch: ${{ github.event.inputs.CorePatch }}"
               echo "- Build time: $(date +'%Y-%m-%d %H:%M:%S')"

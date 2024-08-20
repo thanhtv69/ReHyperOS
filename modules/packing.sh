@@ -95,7 +95,6 @@ repack_img_and_super() {
             sed -i '/^# product .* erofs/ s/^# //' "$fstab"
         fi
     done
-    
 
     for partition in "${EXTRACT_LIST[@]}"; do
         green "Repack $partition.img"
@@ -110,8 +109,8 @@ repack_img_and_super() {
         python3 "$BIN_DIR/contextpatch.py" "$input_folder_image" "$file_contexts_file" >/dev/null 2>&1
 
         if [[ "$build_type" == "ext4" && " ${EXT4_LIST[*]} " == *" $partition "* ]]; then
-            
-            this_size=$(du -sb $EXTRACTED_DIR/${partition} |tr -cd 0-9)
+
+            this_size=$(du -sb $EXTRACTED_DIR/${partition} | tr -cd 0-9)
             green "Original Size: $(echo "scale=2; $this_size / 1048576" | bc) MB"
             this_size=$(echo "scale=2; $this_size * 1.2" | bc)
             green "New Size (+20%): $(echo "scale=2; $this_size / 1048576" | bc) MB"
@@ -119,7 +118,7 @@ repack_img_and_super() {
         else
             mkfs.erofs --quiet -zlz4hc --workers=$max_threads -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
         fi
-        
+
         if [ ! -f "$output_image" ]; then
             error "Mkfs erofs $partition failed"
             exit 1
@@ -130,6 +129,7 @@ repack_img_and_super() {
     done
 
     blue "Repack super.img"
+    local super_size=$(bash $BIN_DIR/getSuperSize.sh $device)
     start=$(date +%s)
     local super_out="$READY_DIR/images/super.img"
     local lpargs="-F --virtual-ab --output $super_out --metadata-size 65536 --super-name super --metadata-slots 3 --device super:$super_size --group=qti_dynamic_partitions_a:$super_size --group=qti_dynamic_partitions_b:$super_size"
