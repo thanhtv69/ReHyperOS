@@ -208,7 +208,7 @@ zip_rom() {
     7za -tzip a miui.zip bin/* images/* FlashROM.bat "$log_file_name" -y
     cd "$PROJECT_DIR"
     local md5=$(md5sum "$READY_DIR/miui.zip" | awk '{ print $1 }')
-    local rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}._[${build_type}].zip"
+    local rom_name="ReHyper_${device}_${os_version}_${md5:0:8}_${build_time}VN_${android_version}.0_[${build_type}].zip"
     local rom_path="$READY_DIR/$rom_name"
     mv "$READY_DIR/miui.zip" "$rom_path"
 
