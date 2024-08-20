@@ -1,11 +1,20 @@
 #!/bin/bash
+sudo chmod 777 -R ./bin/*
+source modules/framework.sh
+source modules/packing.sh
+source modules/smali.sh
+source modules/vietnamize.sh
+source modules/common.sh
+
 URL="${1:-"https://bn.d.miui.com/OS1.0.22.0.UMLCNXM/miui_COROT_OS1.0.22.0.UMLCNXM_7b539d7cbd_14.0.zip"}"
 GITHUB_ENV="$2"
 core_patch=${3:-true}
 build_type="${4:-"erofs"}" # erofs/ext4
 
+yellow "Core patch: $core_patch"
+yellow "Build type: $build_type"
+
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
-sudo chmod 777 -R ./bin/*
 is_clean=$([ -n "$1" ] && echo true || echo false)
 PROJECT_DIR=$(pwd)
 
@@ -41,11 +50,6 @@ android_version=$(echo ${URL} | cut -d"_" -f5 | cut -d"." -f1)
 build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
-source modules/framework.sh
-source modules/packing.sh
-source modules/smali.sh
-source modules/vietnamize.sh
-source modules/common.sh
 
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
