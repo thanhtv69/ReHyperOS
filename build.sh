@@ -11,9 +11,6 @@ GITHUB_ENV="$2"
 core_patch=${3:-true}
 build_type="${4:-"erofs"}" # erofs/ext4
 
-yellow "Core patch: $core_patch"
-yellow "Build type: $build_type"
-
 # Thiết lập quyền truy cập cho tất cả các tệp trong thư mục hiện tại
 is_clean=$([ -n "$1" ] && echo true || echo false)
 PROJECT_DIR=$(pwd)
@@ -50,19 +47,18 @@ android_version=$(echo ${URL} | cut -d"_" -f5 | cut -d"." -f1)
 build_time=$(TZ="Asia/Ho_Chi_Minh" date +"%Y%m%d_%H%M%S")
 max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
-
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
     vendor_build_prop="$EXTRACTED_DIR/vendor/build.prop"
-    
+
     # Đọc thông tin sdk_version
     sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
     green "- SDK Version: $sdk_version"
-    
+
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
     green "- Device: $device"
-    
+
     # Đọc thông tin version_release
     version_release=$(grep -w ro.product.build.version.release "$product_build_prop" | cut -d"=" -f2)
     green "- Version Release: $version_release"
@@ -72,10 +68,13 @@ main() {
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
-    
+
     blue "========================================="
     blue "START build"
     start_build=$(date +%s)
+    yellow "Core patch: $core_patch"
+    yellow "Build type: $build_type"
+    
     download_and_extract
     extract_img
     read_info
@@ -88,28 +87,28 @@ main() {
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
-    
+
     decompile_smali "$framework"
     decompile_smali "$services"
     decompile_smali "$miui_framework"
     decompile_smali "$miui_services"
-    
+
     framework_patcher
     google_photo_cts
     # changhuapeng_patch
-    
+
     recompile_smali "$framework"
     recompile_smali "$services"
     recompile_smali "$miui_framework"
     recompile_smali "$miui_services"
-    
+
     modify
     replace_package_install
     # #==============================================
     repack_img_and_super
     generate_script
     zip_rom
-    
+
     end_build=$(date +%s)
     blue "END build in $((end_build - start_build)) seconds"
 }
