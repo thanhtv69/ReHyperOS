@@ -81,8 +81,6 @@ disable_avb_and_dm_verity() {
             "$file"
     done
     blue "END Disable AVB and dm-verity"
-    # # Thêm # và khoảng trắng vào đầu các dòng bắt đầu bằng "overlay"
-    # sed -i '/^overlay/ s/^/# &/' "$file"
 }
 
 modify() {
