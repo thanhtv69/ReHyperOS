@@ -112,4 +112,5 @@ main() {
     end_build=$(date +%s)
     blue "END build in $((end_build - start_build)) seconds"
 }
+find "$PROJECT_DIR" -type f -name "*.sh" -exec dos2unix -q {} +
 main
