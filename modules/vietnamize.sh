@@ -199,14 +199,14 @@ vietnamize() {
     
     green "Add Lunarian Calendar"
     sed -i \
-    -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
-    -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\/MM || e\/N<\/string>/' \
-    -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
-    -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM || e\/N<\/string>/' \
-    -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
-    -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa • EEEE, dd\/MM || e\/N YY YYYY<\/string>/' \
-    -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM || e\/N YY<\/string>/' \
-    -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM || e\/N<\/string>/' \
+    -e '/<string name="aod_lock_screen_date">/s/>.*<\/string>/>\EEE, dd\.MM\.YYYY 💕 e\/N YY<\/string>/' \
+    -e '/<string name="aod_lock_screen_date_12">/s/>.*<\/string>/>\EEE, dd\.MM\.YYYY 💕 e\/N YY<\/string>/' \
+    -e '/<string name="status_bar_clock_date_format">/s/>.*<\/string>/>\EE, dd\/MM 💕 e\/N<\/string>/' \
+    -e '/<string name="status_bar_clock_date_format_12">/s/>.*<\/string>/>\EE, dd\/MM 💕 e\/N<\/string>/' \
+    -e '/<string name="status_bar_clock_date_time_format">/s/>.*<\/string>/>\H:mm | EEEE, dd\.MM\.YYYY 💕 e\/N YY<\/string>/' \
+    -e '/<string name="status_bar_clock_date_time_format_12">/s/>.*<\/string>/>\h:mm aa | EEEE, dd\.MM\.YYYY 💕 e\/N YY<\/string>/' \
+    -e '/<string name="miui_magazine_c_clock_style2_date">/s/>.*<\/string>/>\EE, dd\/MM 💕 e\/N YY<\/string>/' \
+    -e '/<string name="format_month_day_week">/s/>.*<\/string>/>\EEEE, dd\/MM 💕 e\/N<\/string>/' \
     $strings_file
     
     green "Edit Date Format"
