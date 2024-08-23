@@ -1,58 +1,59 @@
-system/system/app/BasicDreams
-system/system/app/CarrierDefaultApp
-system/system/app/ExtShared
-system/system/app/PartnerBookmarksProvider
-system/system/app/PrintRecommendationService
-system/system/app/Protips
-system/system/app/SimAppDialog
-system/system/app/Traceur
-system/system/app/WallpaperBackup
-system/system/app/WapiCertManage
-system/system/priv-app/BackupRestoreConfirmation
-system/system/priv-app/BlockedNumberProvider
-system/system/priv-app/BuiltInPrintService
-system/system/priv-app/CallLogBackup
-system/system/priv-app/CellBroadcastLegacyApp
-system/system/priv-app/CellBroadcastServiceModulePlatform
-system/system/priv-app/LiveWallpapersPicker
-system/system/priv-app/LocalTransport
-system/system/priv-app/ManagedProvisioning
-system/system/priv-app/MusicFX
-system/system/priv-app/ONS
-system/system/priv-app/SharedStorageBackup
-system/system/priv-app/StatementService
-system/system/priv-app/UserDictionaryProvider
-system_ext/app/DeviceInfo
-system_ext/app/DeviceStatisticsService
-system_ext/app/MiSightService
-system_ext/app/MiuiPrintSpooler
-system_ext/app/ModemTestBox
-system_ext/app/WAPPushManager
-system_ext/priv-app/EmergencyInfo
-product/app/CameraTools_beta
-product/app/com.xiaomi.macro
-product/app/ConferenceDialer
-product/app/DeviceInfoQR
-product/app/mi_connect_service
-product/app/MIUIAccessibility
-product/app/MiuiContentCatcherMIUI15
-product/app/MIUIFrequentPhrase
-product/app/MIUIGuardProvider
-product/app/MIUITouchAssistant
-product/app/Music
-product/app/OTrPBroker
-product/app/SecurityOnetrackService
-product/app/SwitchAccess
-product/app/talkback
-product/priv-app/ConfigUpdater
-product/priv-app/MIUIBarrageV2
-product/priv-app/MIUIBarrage
-product/priv-app/MIUIMirror
-product/priv-app/MIUIPersonalAssistantPhoneMIUI15
-product/priv-app/MIUIPersonalAssistantPhoneMIUI15NEW
-product/priv-app/RegService
-product/priv-app/SettingsIntelligence
-product/pangu/system/priv-app/SystemHelper
+# system/system/app/BasicDreams
+# system/system/app/CarrierDefaultApp
+# system/system/app/ExtShared
+# system/system/app/PartnerBookmarksProvider
+# system/system/app/PrintRecommendationService
+# system/system/app/Protips
+# system/system/app/SimAppDialog
+# system/system/app/Traceur
+# system/system/app/WallpaperBackup
+# system/system/app/WapiCertManage
+# system/system/priv-app/BackupRestoreConfirmation
+# system/system/priv-app/BlockedNumberProvider
+# system/system/priv-app/BuiltInPrintService
+# system/system/priv-app/CallLogBackup
+# system/system/priv-app/CellBroadcastLegacyApp
+# system/system/priv-app/CellBroadcastServiceModulePlatform
+# system/system/priv-app/LiveWallpapersPicker
+# system/system/priv-app/LocalTransport
+# system/system/priv-app/ManagedProvisioning
+# system/system/priv-app/MusicFX
+# system/system/priv-app/ONS
+# system/system/priv-app/SharedStorageBackup
+# system/system/priv-app/StatementService
+# system/system/priv-app/UserDictionaryProvider
+# system_ext/app/DeviceInfo
+# system_ext/app/DeviceStatisticsService
+# system_ext/app/MiSightService
+# system_ext/app/MiuiPrintSpooler
+# system_ext/app/ModemTestBox
+# system_ext/app/WAPPushManager
+# system_ext/priv-app/EmergencyInfo
+# product/app/CameraTools_beta
+# product/app/com.xiaomi.macro
+# product/app/ConferenceDialer
+# product/app/DeviceInfoQR
+# product/app/mi_connect_service
+# product/app/MIUIAccessibility
+# product/app/MiuiContentCatcherMIUI15
+# product/app/MIUIFrequentPhrase
+# product/app/MIUIGuardProvider
+# product/app/MIUITouchAssistant
+# product/app/Music
+# product/app/OTrPBroker
+# product/app/SecurityOnetrackService
+# product/app/SwitchAccess
+# product/app/talkback
+# product/priv-app/ConfigUpdater
+# product/priv-app/MIUIBarrageV2
+# product/priv-app/MIUIBarrage
+# product/priv-app/MIUIMirror
+# product/priv-app/MIUIPersonalAssistantPhoneMIUI15
+# product/priv-app/MIUIPersonalAssistantPhoneMIUI15NEW
+# product/priv-app/RegService
+# product/priv-app/SettingsIntelligence
+# product/pangu/system/priv-app/SystemHelper
+
 product/data-app/com.iflytek.inputmethod.miui
 product/data-app/BaiduIME
 product/data-app/MiRadio
@@ -119,3 +120,10 @@ product/data-app/MIUIVideo
 product/data-app/MIUIHuanji
 
 product/data-app/XMRemoteController
+product/app/MIUIFrequentPhrase
+#MIUI14
+product/data-app/MIUINewHome_Removable
+product/data-app/Xinre
+product/data-app/MIGalleryLockscreen-T
+
+#END

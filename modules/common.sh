@@ -73,7 +73,7 @@ disable_avb_and_dm_verity() {
     find "$EXTRACTED_DIR/" -path "*/etc/*" -type f -name 'fstab.*' | while read -r file; do
         green "Xử lý: $file"
         sed -i -E \
-            -e 's/,avb(=[^,]+)?,/,/' \
+            -e 's/,avb(=[^,]+)?//' \
             -e 's/,avb_keys=[^,]+avbpubkey//' \
             -e 's/,fileencryption=[^,]+,/,/' \
             -e 's/,metadata_encryption=[^,]+,/,/' \

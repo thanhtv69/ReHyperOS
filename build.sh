@@ -6,7 +6,7 @@ source modules/smali.sh
 source modules/vietnamize.sh
 source modules/common.sh
 
-URL="${1:-"https://bn.d.miui.com/OS1.0.22.0.UMLCNXM/miui_COROT_OS1.0.22.0.UMLCNXM_7b539d7cbd_14.0.zip"}"
+URL="${1:-"https://bn.d.miui.com/V14.0.14.0.TMLCNXM/miui_COROT_V14.0.14.0.TMLCNXM_0c4fddade3_13.0.zip"}"
 GITHUB_ENV="$2"
 core_patch=${3:-true}
 build_type="${4:-"erofs"}" # erofs/ext4
@@ -50,15 +50,15 @@ max_threads=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 read_info() {
     product_build_prop="$EXTRACTED_DIR/product/etc/build.prop"
     vendor_build_prop="$EXTRACTED_DIR/vendor/build.prop"
-
+    
     # Đọc thông tin sdk_version
     sdk_version=$(grep -w ro.product.build.version.sdk "$product_build_prop" | cut -d"=" -f2)
     green "- SDK Version: $sdk_version"
-
+    
     # Đọc thông tin device
     device=$(grep -w ro.product.mod_device "$vendor_build_prop" | cut -d"=" -f2)
     green "- Device: $device"
-
+    
     # Đọc thông tin version_release
     version_release=$(grep -w ro.product.build.version.release "$product_build_prop" | cut -d"=" -f2)
     green "- Version Release: $version_release"
@@ -68,7 +68,7 @@ main() {
     rm -f "$LOG_FILE" >/dev/null 2>&1
     mkdir -p "$OUT_DIR"
     touch "$LOG_FILE"
-
+    
     blue "========================================="
     blue "START build"
     start_build=$(date +%s)
@@ -79,36 +79,36 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    vietnamize
+    # vietnamize
     remove_bloatware
     add_google
-    # ==============================================
+    # # ==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
-
+    
     decompile_smali "$framework"
     decompile_smali "$services"
     decompile_smali "$miui_framework"
     decompile_smali "$miui_services"
-
+    
     framework_patcher
     google_photo_cts
-    # changhuapeng_patch
-
+    # # changhuapeng_patch
+    
     recompile_smali "$framework"
     recompile_smali "$services"
     recompile_smali "$miui_framework"
     recompile_smali "$miui_services"
-
+    
     modify
-    replace_package_install
-    # #==============================================
+    # replace_package_install
+    # # #==============================================
     repack_img_and_super
     generate_script
     zip_rom
-
+    
     end_build=$(date +%s)
     blue "END build in $((end_build - start_build)) seconds"
 }
