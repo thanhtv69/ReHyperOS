@@ -6,7 +6,7 @@ framework_patcher() {
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
     
-    curl -k --location --remote-name --max-time 60 "$url" || cp -f $FILES_DIR/FrameworkPatcher-main.zip $OUT_DIR/master.zip
+    curl -k --location --remote-name --max-time 120 "$url" || { error "Failed to download $url" && exit 1; }
     7za x master.zip -aoa
     rm -rf master.zip
     

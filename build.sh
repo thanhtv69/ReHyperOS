@@ -6,7 +6,7 @@ source modules/smali.sh
 source modules/vietnamize.sh
 source modules/common.sh
 
-URL="${1:-"https://bn.d.miui.com/V14.0.14.0.TMLCNXM/miui_COROT_V14.0.14.0.TMLCNXM_0c4fddade3_13.0.zip"}"
+URL="${1:-"https://bn.d.miui.com/OS1.0.22.0.UMLCNXM/miui_COROT_OS1.0.22.0.UMLCNXM_7b539d7cbd_14.0.zip"}"
 GITHUB_ENV="$2"
 core_patch=${3:-true}
 build_type="${4:-"erofs"}" # erofs/ext4
@@ -79,7 +79,7 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    # vietnamize
+    vietnamize
     remove_bloatware
     add_google
     # # ==============================================
@@ -103,7 +103,7 @@ main() {
     recompile_smali "$miui_services"
     
     modify
-    # replace_package_install
+    replace_package_install
     # # #==============================================
     repack_img_and_super
     generate_script

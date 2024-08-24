@@ -101,7 +101,7 @@ vietnamize() {
     cd "$vietnamese_dir"
     
     # Tải file ZIP từ URL và lưu với tên đã chỉ định
-    curl -k --location --remote-name --max-time 20 "$url" || cp -f $FILES_DIR/MIUI-14-XML-Vietnamese-master.zip $vietnamese_dir/master.zip
+    curl -k --location --remote-name --max-time 60 "$url" || { error "Failed to download $url" && exit 1; }
     7za x master.zip -aoa
     rm -f master.zip
     declare -A BUILD_APK_LIST=(
@@ -160,7 +160,7 @@ vietnamize() {
         ["XiaomiAccount"]="com.xiaomi.account"
         ["XiaomiSimActivateService"]="com.xiaomi.simactivate.service"
         ["MiuiMacro"]="com.xiaomi.macro"
-        ["framework-res"]="android"
+        # ["framework-res"]="android"
     )
     # for dir in "$vietnamese_master"/*/; do
     #     dirname=$(basename "$dir" .apk)
@@ -229,9 +229,8 @@ vietnamize() {
         touch "$vietnamese_dir/$apk_name/res/values-vi/strings.xml"
         echo -e '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>' > "$vietnamese_dir/$apk_name/res/values-vi/strings.xml"
         
-        
-        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" android:compileSdkVersion=\"23\" android:compileSdkVersionCodename=\"6.0-2438415\" package=\"overlay.$package_name\" platformBuildVersionCode=\"$SHORT_DATE\" platformBuildVersionName=\"$ALL_DATE\">\n    <overlay android:isStatic=\"true\" android:priority=\"1\" android:targetPackage=\"$package_name\"/>\n</manifest>"
-        local apktool_content="version: 2.9.3\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $SHORT_DATE\n  versionName: $ALL_DATE\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
+        local manifest_content="<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" android:compileSdkVersion=\"$sdk_version\" android:compileSdkVersionCodename=\"$version_release\" package=\"vn.overlay.$package_name\" platformBuildVersionCode=\"$sdk_version\" platformBuildVersionName=\"$version_release\">\n    <overlay android:isStatic=\"true\" android:priority=\"999\" android:targetPackage=\"$package_name\"/>\n</manifest>"
+        local apktool_content="version: 2.9.3\napkFileName: $apk_name.apk\nisFrameworkApk: false\nusesFramework:\n  ids:\n  - 1\n  tag: null\nsdkInfo:\npackageInfo:\n  forcedPackageId: 127\n  renameManifestPackage: null\nversionInfo:\n  versionCode: $sdk_version\n  versionName: $version_release\nresourcesAreCompressed: false\nsharedLibrary: false\nsparseResources: false\ndoNotCompress:\n- resources.arsc"
         echo -e $manifest_content >"$vietnamese_dir/$apk_name/AndroidManifest.xml"
         echo -e $apktool_content >"$vietnamese_dir/$apk_name/apktool.yml"
         
@@ -239,12 +238,11 @@ vietnamize() {
             yellow "WARNING: $vietnamese_master/$apk_name.apk/res/values-vi doesn't exist"
             continue
         fi
-        # find "$vietnamese_master/$apk_name.apk/res/values-vi" -name "*.xml" -exec cp {} "$vietnamese_dir/$apk_name/res/values-vi" \;
+
         cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
         
         generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
         
-        # find $vietnamese_dir/$apk_name -type f -exec dos2unix -q {} +
         
         $APK_TOOL b -api $sdk_version -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk # >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
         zipalign -f 4 $vietnamese_dir/${apk_name}_tmp.apk $vietnamese_dir/packed/${apk_name}.apk >/dev/null 2>&1 || error "ERROR: Zipalign overlay $apk_name.apk failed"
