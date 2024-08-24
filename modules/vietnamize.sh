@@ -1,92 +1,57 @@
 generate_public_xml() {
     local input_dir=$1
     local output_file=$2
-    
+
     # Check if the input directory exists
-    if [ ! -d "$input_dir" ]; then
-        echo "Input directory does not exist."
+    if [[ ! -d "$input_dir" ]]; then
+        log_error "Input directory does not exist."
         return 1
     fi
-    
-    # Initialize counters for IDs
-    local array_id_counter=0
-    local plurals_id_counter=0
-    local string_id_counter=0
-    
-    generate_id() {
-        local type=$1
-        local array_counter=$2
-        local plurals_counter=$3
-        local string_counter=$4
-        local id=""
-        
-        case $type in
-            "array")
-                id=$(printf "0x7f02%04x" $array_counter)
-            ;;
-            "plurals")
-                id=$(printf "0x7f03%04x" $plurals_counter)
-            ;;
-            "string")
-                id=$(printf "0x7f04%04x" $string_counter)
-            ;;
-            *)
-                echo "Unknown type: $type"
-                return 1
-            ;;
-        esac
-        
-        echo "$id"
-    }
-    
+
+    # Create the output directory if it doesn't exist
+    local output_folder
+    output_folder=$(dirname "$output_file")
+    if [[ ! -d "$output_folder" ]]; then
+        mkdir -p "$output_folder"
+    fi
+
     # Start creating the public.xml file
-    echo '<?xml version="1.0" encoding="utf-8"?>' >"$output_file"
-    echo '<resources>' >>"$output_file"
-    
-    # Iterate through all XML files in the directory
-    for file in "$input_dir"/*.xml; do
-        # Get the base name of the file without the extension
-        local basename=$(basename "$file" .xml)
-        
+    echo '<?xml version="1.0" encoding="utf-8"?>' > "$output_file"
+    echo '<resources>' >> "$output_file"
+
+    # Iterate through all files in the directory
+    find "$input_dir" -type f | while read -r file_path; do
+        file_name=$(basename "$file_path")
+        basename="${file_name%.*}"
+
         # Determine the resource type based on the file name
-        local type=""
-        if [[ $basename == *"strings"* ]]; then
-            type="string"
-            elif [[ $basename == *"arrays"* ]]; then
-            type="array"
-            elif [[ $basename == *"plurals"* ]]; then
-            type="plurals"
+        resource_type=""
+
+        if [[ "$file_name" == *"strings.xml" ]]; then
+            resource_type="string"
+        elif [[ "$file_name" == *"arrays.xml" ]]; then
+            resource_type="array"
+        elif [[ "$file_name" == *"plurals.xml" ]]; then
+            resource_type="plurals"
+        elif [[ "$file_name" == *"public.xml" ]]; then
+            continue
+        elif [[ "$file_name" == *.html ]]; then
+            resource_type="raw"
+            echo "    <public type=\"$resource_type\" name=\"$basename\" />" >> "$output_file"
+            continue
         else
-            continue # Skip this file if it doesn't match any known type
+            log_warn "Skipping unknown resource type: $file_name"
+            continue
         fi
-        
+
         # Extract resource names and add to public.xml
-        grep -oP '(?<=name=")[^"]+' "$file" | while read -r name; do
-            local id
-            id=$(generate_id "$type" $array_id_counter $plurals_id_counter $string_id_counter) # Generate a new unique ID
-            
-            # Update the counters based on the type
-            case $type in
-                "array")
-                    array_id_counter=$((array_id_counter + 1))
-                ;;
-                "plurals")
-                    plurals_id_counter=$((plurals_id_counter + 1))
-                ;;
-                "string")
-                    string_id_counter=$((string_id_counter + 1))
-                ;;
-            esac
-            
-            # echo "Generated ID: $id" # Debug output
-            echo "    <public type=\"$type\" name=\"$name\" id=\"$id\" />" >>"$output_file"
+        grep -oP 'name="\K[^"]+' "$file_path" | while read -r name; do
+            echo "    <public type=\"$resource_type\" name=\"$name\" />" >> "$output_file"
         done
     done
-    
+
     # Finish the public.xml file
-    echo '</resources>' >>"$output_file"
-    
-    # echo "Creation of $output_file completed!"
+    echo '</resources>' >> "$output_file"
 }
 
 vietnamize() {
@@ -160,37 +125,8 @@ vietnamize() {
         ["XiaomiAccount"]="com.xiaomi.account"
         ["XiaomiSimActivateService"]="com.xiaomi.simactivate.service"
         ["MiuiMacro"]="com.xiaomi.macro"
-        # ["framework-res"]="android"
+        ["framework-res"]="android"
     )
-    # for dir in "$vietnamese_master"/*/; do
-    #     dirname=$(basename "$dir" .apk)
-    #     if [[ -n "${BUILD_APK_LIST[$dirname]}" ]] || [[ "$dirname" == "framework-ext-res" ]]; then
-    #         continue
-    #     fi
-    
-    #     apk_path=""
-    #     if [ -d "$EXTRACTED_DIR"/*/*/"$dirname" ]; then
-    #         apk_path=$(find "$EXTRACTED_DIR"/*/*/"$dirname" -name "*.apk" -type f -print -quit)
-    #     fi
-    
-    #     if [ -z "$apk_path" ] && [ -d "$EXTRACTED_DIR/system"/*/*/"$dirname" ]; then
-    #         apk_path=$(find "$EXTRACTED_DIR"/system/*/*/"$dirname" -name "*.apk" -type f -print -quit)
-    #     fi
-    
-    #     if [ -z "$apk_path" ]; then
-    #         continue
-    #     fi
-    
-    #     apk_info=$($APKEDITTOR_COMMAND info -i "$apk_path")
-    #     package_name=$(echo "$apk_info" | grep '^package=' | awk -F'=' '{print $2}' | tr -d '" ')
-    #     # app_name=$(echo "$apk_info" | grep '^AppName=' | awk -F'=' '{print $2}' | tr -d '" ')
-    
-    #     if [[ $(printf "%s\n" "${BUILD_APK_LIST[@]}" | grep -Fxq "$package_name") ]]; then
-    #         continue
-    #     fi
-    #     BUILD_APK_LIST["$dirname"]="$package_name"
-    #     yellow "Add $dirname with $package_name to list Overlay"
-    # done
     
     strings_file=$vietnamese_master/*/res/values-vi/strings.xml
     green "Remove CopyRight"
@@ -241,7 +177,7 @@ vietnamize() {
 
         cp -rf "$vietnamese_master/$apk_name.apk/res/." "$vietnamese_dir/$apk_name/res/"
         
-        generate_public_xml "$vietnamese_dir/$apk_name/res/values-vi" "$vietnamese_dir/$apk_name/res/values/public.xml"
+        generate_public_xml "$vietnamese_dir/$apk_name/res" "$vietnamese_dir/$apk_name/res/values/public.xml"
         
         
         $APK_TOOL b -api $sdk_version -c -f $vietnamese_dir/$apk_name -o $vietnamese_dir/${apk_name}_tmp.apk # >/dev/null 2>&1 || error "ERROR: Build overlay $apk_name.apk failed"
