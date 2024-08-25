@@ -59,11 +59,11 @@ remove_bloatware() {
     blue "END Remove bloatware packages"
 }
 
-add_google() {
+copy_files() {
     blue "========================================="
-    blue "START Add Google Play Store, Gboard"
+    blue "START Add Google Play Store, Gboard, Overlay..."
     sudo cp -rf "$FILES_DIR/common/." "$EXTRACTED_DIR/"
-    blue "END Add Google Play Store, Gboard"
+    blue "END Add Google Play Store, Gboard, Overlay..."
 }
 
 disable_avb_and_dm_verity() {

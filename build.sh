@@ -79,10 +79,10 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    # vietnamize
+    vietnamize
     remove_bloatware
-    add_google
-    # # ==============================================
+    copy_files
+    # ==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
@@ -103,7 +103,7 @@ main() {
     
     modify
     replace_package_install
-    # # #==============================================
+    #==============================================
     repack_img_and_super
     generate_script
     zip_rom
@@ -113,3 +113,4 @@ main() {
 }
 find "$PROJECT_DIR" -type f -name "*.sh" -exec dos2unix -q {} +
 main
+sudo chmod 777 -R ./*

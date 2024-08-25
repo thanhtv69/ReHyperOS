@@ -109,7 +109,7 @@ vietnamize() {
         ["PermissionController"]="com.android.permissioncontroller"
         ["PersonalAssistant"]="com.miui.personalassistant"
         ["PowerKeeper"]="com.miui.powerkeeper"
-        ["Provision"]="com.android.provision"
+        # ["Provision"]="com.android.provision"
         ["SecurityAdd"]="com.miui.securityadd"
         ["SecurityCenter"]="com.miui.securitycenter"
         ["Settings"]="com.android.settings"

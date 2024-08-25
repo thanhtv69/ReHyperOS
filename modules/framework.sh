@@ -6,9 +6,8 @@ framework_patcher() {
     local url="https://github.com/Jefino9488/FrameworkPatcher/archive/refs/heads/master.zip"
     local framework_patcher="$OUT_DIR/FrameworkPatcher-main"
     
-    curl -k --location --remote-name --max-time 120 "$url" || { error "Failed to download $url" && exit 1; }
+    curl -k --location --remote-name "$url" || { error "Failed to download $url" && exit 1; }
     7za x master.zip -aoa
-    rm -rf master.zip
     
     green "Moving framework/classes to classes..."
     mv -f "$OUT_DIR/tmp/framework/classes" "$framework_patcher/classes"
