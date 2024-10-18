@@ -112,8 +112,8 @@ repack_img_and_super() {
 
             this_size=$(du -sb $EXTRACTED_DIR/${partition} | tr -cd 0-9)
             green "Original Size: $(echo "scale=2; $this_size / 1048576" | bc) MB"
-            this_size=$(echo "scale=2; $this_size * 1.2" | bc)
-            green "New Size (+20%): $(echo "scale=2; $this_size / 1048576" | bc) MB"
+            this_size=$(echo "scale=2; $this_size * 1.1" | bc)
+            green "New Size (+10%): $(echo "scale=2; $this_size / 1048576" | bc) MB"
             make_ext4fs -J -T 1230768000 -S $file_contexts_file -l $this_size -C $fs_config_file -L $partition -a $partition $output_image $input_folder_image
         else
             mkfs.erofs --quiet -zlz4hc --workers=$max_threads -T 1230768000 --mount-point="$partition" --fs-config-file="$fs_config_file" --file-contexts="$file_contexts_file" "$output_image" "$input_folder_image"
