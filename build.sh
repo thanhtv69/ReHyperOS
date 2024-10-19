@@ -88,21 +88,21 @@ main() {
     miui_framework="$EXTRACTED_DIR"/system_ext/framework/miui-framework.jar
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
     
-#    decompile_smali "$framework"
-#    decompile_smali "$services"
-#    decompile_smali "$miui_framework"
-#    decompile_smali "$miui_services"
+   decompile_smali "$framework"
+   decompile_smali "$services"
+   decompile_smali "$miui_framework"
+   decompile_smali "$miui_services"
     
-#    framework_patcher
-#    google_photo_cts
+   framework_patcher
+   google_photo_cts
     
-#    recompile_smali "$framework"
-#    recompile_smali "$services"
-#    recompile_smali "$miui_framework"
-#    recompile_smali "$miui_services"
+   recompile_smali "$framework"
+   recompile_smali "$services"
+   recompile_smali "$miui_framework"
+   recompile_smali "$miui_services"
     
     modify
-#    replace_package_install
+    replace_package_install
     #==============================================
     repack_img_and_super
     generate_script
