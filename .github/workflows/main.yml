@@ -5,7 +5,7 @@ on:
       URL:
         description: "Official ROM URL"
         required: true
-        default: "https://bn.d.miui.com/OS1.0.22.0.UMLCNXM/miui_COROT_OS1.0.22.0.UMLCNXM_7b539d7cbd_14.0.zip"
+        default: "https://bn.d.miui.com/OS1.0.23.0.UMLCNXM/miui_COROT_OS1.0.23.0.UMLCNXM_f444c308c8_14.0.zip"
         # default: "https://bn.d.miui.com/V14.0.14.0.TMLCNXM/miui_COROT_V14.0.14.0.TMLCNXM_0c4fddade3_13.0.zip"
       CorePatch:
         description: "Core patch"
