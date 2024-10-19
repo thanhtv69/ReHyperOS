@@ -33,13 +33,12 @@ framework_patcher() {
     cd $framework_patcher
     if [[ "$core_patch" == true ]]; then
         yellow "Core patching"
-        python3 "framework_patch.py"
-        python3 "miui-service_Patch.py"
     else
         yellow "Not core patching"
-        python3 "nframework_patch.py"
-        python3 "nservices_patch.py"
     fi
+    python3 "framework_patch.py" $core_patch
+    python3 "services_patch.py" $core_patch
+
     python3 "miui-framework_patch.py"
     python3 "miui-service_Patch.py"
     
