@@ -79,9 +79,9 @@ main() {
     extract_img
     read_info
     disable_avb_and_dm_verity
-    vietnamize
+    # vietnamize
     remove_bloatware
-    copy_files
+    # copy_files
     # ==============================================
     framework="$EXTRACTED_DIR"/system/system/framework/framework.jar
     services="$EXTRACTED_DIR"/system/system/framework/services.jar
@@ -89,20 +89,20 @@ main() {
     miui_services="$EXTRACTED_DIR"/system_ext/framework/miui-services.jar
     
    decompile_smali "$framework"
-   decompile_smali "$services"
-   decompile_smali "$miui_framework"
-   decompile_smali "$miui_services"
+   # decompile_smali "$services"
+   # decompile_smali "$miui_framework"
+   # decompile_smali "$miui_services"
     
-   framework_patcher
+   # framework_patcher
    google_photo_cts
     
    recompile_smali "$framework"
-   recompile_smali "$services"
-   recompile_smali "$miui_framework"
-   recompile_smali "$miui_services"
+   # recompile_smali "$services"
+   # recompile_smali "$miui_framework"
+   # recompile_smali "$miui_services"
     
     modify
-    replace_package_install
+    # replace_package_install
     #==============================================
     repack_img_and_super
     generate_script
